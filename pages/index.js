@@ -526,7 +526,7 @@ const SearchInput = ({ contractList, searchType, setSearchType, setData, setShow
                     type="text"
                     id="search"
                     value={searchTerm}
-                    className="block w-full rounded-lg border border-fuchsia-100 bg-fuchsia-50/30 p-2.5 ps-5 text-sm text-gray-900 hover:border-fuchsia-200 hover:bg-gray-100/50 focus:border-gray-300 focus:bg-white focus:ring-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500"
+                    className="block w-full rounded-lg border border-fuchsia-100 bg-fuchsia-50/30 p-2.5 ps-5 text-sm text-gray-900 hover:border-fuchsia-200 hover:bg-white focus:border-fuchsia-300 focus:bg-white focus:ring-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500"
                     placeholder="계약서를 검색해보세요!"
                     onChange={async (e) => setSearchTerm(e.target.value)}
                     required
