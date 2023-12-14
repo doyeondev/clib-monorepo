@@ -1,0 +1,443 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+input.picker[type='date'] {
+  position: relative;
+}
+
+.title {
+  @apply text-center text-lg font-bold;
+}
+
+.level-two-item {
+  @apply list-inside list-decimal;
+}
+.input[type='text'] {
+  -webkit-ime-mode: active;
+  -moz-ime-mode: active;
+  -ms-ime-mode: active;
+  ime-mode: active;
+}
+
+input.picker[type='date']::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  color: transparent;
+  background: transparent;
+  cursor: pointer;
+}
+.drag-over {
+  background-color: #ff0;
+}
+
+.drop-zone-wrapper {
+  @apply flex w-[80%] text-center font-medium text-[#cccccc];
+}
+.drop-zone {
+  /* width: 400px;
+  height: 100px;
+  padding: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  cursor: pointer;
+  color: #cccccc;
+  border: 4px dashed #009578;
+  border-radius: 10px; */
+
+  @apply mt-4
+  flex h-[200px]
+  w-full cursor-pointer
+  items-center justify-center
+  rounded border-4 border-dashed border-[#BB22E2] p-8;
+}
+
+.three-d {
+  @apply mb-0.5 cursor-pointer select-none rounded-lg border-b-[1px] border-fuchsia-400
+  bg-fuchsia-500 py-2
+  transition-all
+  duration-150 [box-shadow:0_2px_0_0_#BB22E2,0_4px_0_0_#BB22E2] active:translate-y-2
+  active:border-b-[0px] active:[box-shadow:0_0px_0_0_#BB22E2,0_0px_0_0_#BB22E2];
+}
+
+.three-d-gray {
+  @apply mb-0.5 cursor-pointer select-none rounded-lg border-b-[1px]  py-2
+  transition-all
+  duration-150 [box-shadow:0_2px_0_0_#000000,0_4px_0_0_#000000] active:translate-y-2
+  active:border-b-[0px] active:[box-shadow:0_0px_0_0_#000000,0_0px_0_0_#000000];
+}
+/* className="ms-2 flex items-center rounded-lg border border-gray-600 bg-gray-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-700" */
+
+.check {
+  @apply mt-4 h-[120px] w-full cursor-pointer items-center justify-center rounded border-4 border-dashed border-[#BB22E2] p-2 text-center font-medium;
+}
+.preview-doc h1 {
+  @apply text-center text-lg font-bold;
+}
+
+.preview-doc p {
+  @apply text-black;
+}
+
+.clauseCard li {
+  @apply list-inside list-decimal;
+}
+
+.red {
+  @apply text-red-600;
+}
+
+.blue {
+  @apply text-blue-600;
+}
+
+.purple {
+  @apply text-purple-600;
+}
+
+.preview-doc h2 {
+  @apply font-semibold underline;
+}
+
+.preview-doc li {
+  @apply list-inside list-decimal;
+}
+
+.thumb {
+  /* width: 100px;
+  padding: 5px;
+  float: left; */
+  @apply float-left flex w-full items-start space-x-1 px-2 text-left text-xs;
+}
+
+.thumb > img {
+  @apply /* width: 
+  100%; */ select-none;
+}
+.thumb > .close {
+  /* width: 32px;
+  height: 32px;
+  position: absolute;
+  background-color: red;
+  cursor: pointer; */
+  @apply cursor-pointer select-none;
+}
+.thumb > p {
+  @apply break-all;
+}
+.close {
+  /* width: 32px;
+  height: 32px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  color: #000000;
+  border-radius: 16px; */
+  @apply flex h-5 w-5 text-black;
+}
+
+.drop-zone--over {
+  border-style: solid;
+}
+
+.drop-zone__input {
+  display: none;
+}
+
+.drop-zone__thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #cccccc;
+  background-size: cover;
+  position: relative;
+}
+
+.drop-zone__thumb::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 5px 0;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.75);
+  font-size: 14px;
+  text-align: center;
+}
+
+.invoice {
+  /*나는 원래 색깔이 흰색인데, 다크모드일 때는 bg-slate-800으로 하겠다*/
+  @apply block w-full rounded-md border-none bg-gray-100 focus:ring-0;
+}
+.checkout {
+  /*나는 원래 색깔이 흰색인데, 다크모드일 때는 bg-slate-800으로 하겠다*/
+  @apply block w-full rounded-md border-none bg-white focus:ring-0;
+}
+.glossary {
+  /*나는 원래 색깔이 흰색인데, 다크모드일 때는 bg-slate-800으로 하겠다*/
+  @apply cursor-context-menu text-blue-500 underline decoration-blue-500 underline-offset-2;
+}
+.tableWidth {
+  /*나는 원래 색깔이 흰색인데, 다크모드일 때는 bg-slate-800으로 하겠다*/
+  @apply overflow-hidden text-ellipsis whitespace-nowrap;
+}
+.center-icon {
+  /*나는 원래 색깔이 흰색인데, 다크모드일 때는 bg-slate-800으로 하겠다*/
+  @apply absolute bottom-0 left-0 right-0 top-0 m-auto;
+}
+.tippy-content {
+  /*나는 원래 색깔이 흰색인데, 다크모드일 때는 bg-slate-800으로 하겠다*/
+  @apply whitespace-pre-line;
+}
+
+/* @layer base {
+    [type='text'],
+    [type='email'],
+    [type='url'],
+    [type='password'],
+    [type='number'],
+    [type='date'],
+    [type='datetime-local'],
+    [type='month'],
+    [type='search'],
+    [type='tel'],
+    [type='time'],
+    [type='week'],
+    [multiple],
+    textarea,
+    select {
+      @apply block w-full rounded-md border-none bg-gray-100 focus:ring-0;
+    }
+
+    td:last-child,
+    th:last-child {
+      @apply px-0;
+    }
+
+    td:first-child,
+    th:first-child {
+      @apply pl-0;
+    }
+
+    td,
+    th {
+      @apply p-1 md:p-1.5;
+    }
+  } */
+
+.bg-primary {
+  @apply bg-white dark:bg-slate-800;
+}
+
+.btn-project {
+  @apply inline-flex rounded border-0 bg-indigo-500 px-6 py-2 text-lg text-white hover:bg-indigo-600 focus:outline-none dark:text-white;
+}
+
+.btn-plain {
+  @apply flex cursor-pointer place-content-center place-items-center bg-white text-sm capitalize text-gray-700 transition-colors duration-200 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800;
+}
+
+.btn-purple-headless {
+  @apply flex cursor-pointer place-content-center place-items-center rounded-lg bg-purple-600 text-center font-medium capitalize text-white transition-colors duration-200 hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800;
+}
+
+.btn-headless {
+  @apply flex cursor-pointer place-content-center place-items-center text-center capitalize transition-colors duration-200 focus:outline-none;
+}
+
+/* focus:ring-purple-300 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800 */
+
+.btn-purple {
+  @apply flex cursor-pointer place-content-center place-items-center rounded-lg bg-purple-600 text-center text-sm font-medium capitalize text-white transition-colors duration-200 hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800;
+}
+
+.btn-blue {
+  @apply flex cursor-pointer place-content-center place-items-center bg-blue-600 text-center capitalize text-white transition-colors duration-200 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800;
+}
+
+.btn-white {
+  @apply flex cursor-pointer place-content-center place-items-center bg-white capitalize transition-colors duration-200 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800;
+}
+
+.project-card {
+  @apply m-3 flex w-full transform flex-col
+          rounded-xl border border-gray-300 transition duration-300
+          hover:scale-105
+          hover:text-blue-600
+          hover:shadow-lg
+          dark:border-gray-200/50
+          dark:hover:shadow-gray-400/40;
+}
+
+.draft {
+  @apply cursor-pointer bg-[#EDF0F7] px-1 py-0.5 text-left align-text-top text-sm text-[#9BA5B3] hover:bg-[#8C53A0] hover:text-white;
+}
+.drafted {
+  @apply cursor-pointer bg-[#D4BCDC] px-1 py-0.5 text-left align-text-top text-sm text-[#000000] hover:bg-[#8C53A0] hover:text-white;
+}
+.variable {
+  @apply cursor-pointer bg-[#8C53A0] px-1 py-0.5 text-left align-text-top text-sm text-[#ffffff] hover:bg-[#8C53A0] hover:text-white;
+}
+.temporary-bounce {
+  -webkit-animation-iteration-count: 10;
+  animation-iteration-count: 10;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply text-slate-900 dark:text-white;
+}
+
+footer {
+  @apply bg-gray-100 text-gray-600
+    dark:bg-slate-600/20 dark:text-white;
+}
+a {
+  @apply text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-50;
+}
+
+p {
+  @apply text-slate-700 dark:text-slate-400;
+}
+
+.outline input:focus-within ~ label,
+.outline input:not(:placeholder-shown) ~ label {
+  @apply z-0 ml-3 -translate-y-4 scale-75 transform px-1 py-0;
+}
+input:focus-within ~ label {
+  @apply -translate-y-6 scale-75 transform text-blue-500;
+}
+input:focus-within ~ label,
+input:not(:placeholder-shown) ~ label {
+  @apply -translate-y-6 scale-75 transform;
+}
+
+input:focus-within ~ label {
+  @apply text-blue-500;
+}
+
+/* @layer base {
+  @font-face {
+    font-family: kopub;
+    font-weight: 400;
+    src: url(/fonts/KoPubMedium.woff2) format('woff2');
+  }
+  @font-face {
+    font-family: kopub;
+    font-weight: 500;
+    src: url(/fonts/proxima-nova/500-medium.woff) format('woff');
+  }
+} */
+
+/* @font-face {
+  font-family: 'kl';
+  font-weight: 300;
+  src: url('/fonts/KoPubLight.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'km';
+  font-weight: 500;
+  src: url('/fonts/KoPubMedium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'kb';
+  font-weight: 700;
+  src: url('/fonts/KoPubBold.woff2') format('woff2');
+}
+
+@layer base {
+  html {
+    font-family: km, kb, kl, system-ui, sans-serif;
+  }
+} */
+
+/* @font-face {
+  font-family: 'kopub';
+  src: url('/fonts/KoPubMedium.woff2') format('woff2');
+}
+
+@layer base {
+  html {
+    font-family: kopub, system-ui, sans-serif;
+  }
+} */
+
+.loading-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: auto;
+  font-size: 12px;
+}
+
+.loading-screen .dot {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  margin: 8px;
+  border-radius: 50%;
+}
+
+.loading-screen .dot::before {
+  position: absolute;
+  content: '';
+  width: 100%;
+  height: 100%;
+  background: inherit;
+  border-radius: inherit;
+  animation: anime 2s ease-out infinite;
+}
+@keyframes anime {
+  50%,
+  75% {
+    transform: scale(2.5);
+  }
+  80%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.loading-screen .dot:nth-child(1) {
+  background-color: #4285f5;
+  /* Blue */
+}
+.loading-screen .dot:nth-child(2) {
+  background-color: #ea4436;
+  /* Red */
+}
+
+.loading-screen .dot:nth-child(3) {
+  background-color: #fbbd06;
+  /* Yellow */
+}
+
+.loading-screen .dot:nth-child(4) {
+  background-color: #34a952;
+  /* Green */
+}
+
+.loading-screen .dot:nth-child(5) {
+  background-color: #cf9fff;
+  /* Purple */
+}
