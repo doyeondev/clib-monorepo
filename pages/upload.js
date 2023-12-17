@@ -723,7 +723,7 @@ export default function Upload() {
         <title>클립 | 계약 업로드</title>
         <meta name="description" content="클립 계약서 업로드 페이지" />
         <meta property="og:title" content="클립 계약서 업로드 페이지" />
-        <link rel="icon" href="/icon/clib_favicon.ico" />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={`flex h-[calc(100vh-68px)] bg-[#F7F9FD] px-8`}>
         <div className="mx-auto grid h-full w-[1440px] grid-cols-5 pt-16">

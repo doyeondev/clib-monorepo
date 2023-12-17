@@ -51,7 +51,7 @@ export default function Result({ data }) {
         <Head>
           <title>{`클립 | ${data.title}`}</title>
           <meta name="description" content="Clib My Asset" />
-          <link rel="icon" href="/icon/clib_favicon.ico" />
+          <link rel="icon" href="/favicon.ico" />
         </Head>
         <div className="bg-white">
           {/* 메뉴상단은 Layout.js에 있음 */}

@@ -124,7 +124,7 @@ const Search = () => {
   return (
     <Layout>
       <Head>
-        <title>클립 | 계약서 검색</title>
+        <title>클립</title>
         <meta name="description" content="Clib My Asset" />
         <link rel="icon" href="/favicon.ico" />
       </Head>

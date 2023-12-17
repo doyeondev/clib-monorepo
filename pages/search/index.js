@@ -33,7 +33,7 @@ const Search = () => {
       <Head>
         <title>클립 | 계약서 검색</title>
         <meta name="description" content="Clib My Asset" />
-        <link rel="icon" href="/icon/clib_favicon.ico" />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
       {data ? <MainLayout contractList={data.items} /> : <Spinner />}
     </Layout>
