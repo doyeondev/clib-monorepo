@@ -15,15 +15,15 @@ import { getContractList, getCategoryList, getContractItem } from '/pages/api/cl
 
 // const fetcher = (url) => fetch('https://conan.ai/_functions/clibContractList').then((response) => response.json())
 const fetcher = (url) => fetch(url).then((response) => response.json())
-function useData() {
-  const { data, error, isLoading } = useSWR(`https://conan.ai/_functions/clibContractList`, fetcher)
+// function useData() {
+//   const { data, error, isLoading } = useSWR(`https://conan.ai/_functions/clibContractList`, fetcher)
 
-  return {
-    category: data,
-    isLoading,
-    isError: error
-  }
-}
+//   return {
+//     category: data,
+//     isLoading,
+//     isError: error
+//   }
+// }
 // const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 // const fetcher = (...args) => fetch(...args).then((res) => res.json())
@@ -34,8 +34,8 @@ const CategoryContext = createContext()
 
 const Search = () => {
   // const { data } = useSWR('aaa', fetcher)
-  const test = useData()
-  if (test) console.log('test', test)
+  // const test = useData()
+  // if (test) console.log('test', test)
   const [assetList, setAssetList] = useState([])
   const [contractList, setContractList] = useState([])
   const [categoryList, setCategoryList] = useState([])
