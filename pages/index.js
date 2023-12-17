@@ -116,7 +116,7 @@ const Search = () => {
   //   <Content user={user} />
   // </div>
   const onInputChange = (e) => {
-    if (e.target === '1234') {
+    if (e.target.value === '1234') {
       setUserApproved(true)
       sessionStorage.setItem('approvalStatus', true)
     }

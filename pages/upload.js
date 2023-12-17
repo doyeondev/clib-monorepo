@@ -118,9 +118,9 @@ export default function Upload() {
     console.log('[useEffect] groupedArray', groupedArray)
     const articles = contentArray.filter((x) => x.tag && x.tag === 'h2')
     const contractTitle = contentArray.filter((x) => x.tag && x.tag === 'h1')[0].text
-    const purpose = contentArray.filter((x) => x.tag && x.tag === 'h4')[0].text ? contentArray.filter((x) => x.tag && x.tag === 'h4')[0].text : ''
-    const partyA = contentArray.filter((x) => x.tag && x.tag === 'h5')[0].text ? contentArray.filter((x) => x.tag && x.tag === 'h5')[0].text : ''
-    const partyB = contentArray.filter((x) => x.tag && x.tag === 'h6')[0].text ? contentArray.filter((x) => x.tag && x.tag === 'h6')[0].text : ''
+    const purpose = contentArray.filter((x) => x.tag && x.tag === 'h4')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h4')[0].text : ''
+    const partyA = contentArray.filter((x) => x.tag && x.tag === 'h5')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h5')[0].text : ''
+    const partyB = contentArray.filter((x) => x.tag && x.tag === 'h6')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h6')[0].text : ''
     DATA_NEW = { ...DATA_NEW, ...{ title: contractTitle, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray } }
     console.log('DATA_NEW', DATA_NEW)
     // setNewData({ ...newData, ...{ title: title, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray } })
