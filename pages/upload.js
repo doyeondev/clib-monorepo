@@ -18,7 +18,6 @@ import { set } from 'lodash'
 // const filteredQuestionData = questionData.filter(x => x.value && x.value.length > 0)
 // let saveLog = { ...activityLog, ...{ endTime: timestamp(), duration: timeDiffSec(activityLog.startTime, timestamp()), durationMin: timeDiffMin(activityLog.startTime, timestamp()) } }
 let DATA_NEW = {
-  contractName: '',
   title: '',
   partyA: '',
   partyB: '',
@@ -27,7 +26,7 @@ let DATA_NEW = {
   contentArray: [],
   industry: '',
   language: '국문',
-  clientName: '',
+  source: '',
   creator: '김도연'
   // contentArray: {
   //     questionGroup_array: questionGroupData,
@@ -38,7 +37,7 @@ const now = new Date()
 
 export default function Upload() {
   const [input, setInput] = useState({
-    clientName: '',
+    source: '',
     industry: '',
     language: '',
     creator: ''
@@ -106,7 +105,7 @@ export default function Upload() {
     // console.log('들어옴')
     // console.log(input)
     // setDisabled(true)
-    let DATA_TO_SAVE = { ...newData, ...{ clientName: input.clientName, industry: input.industry, creator: input.creator, language: input.language } }
+    let DATA_TO_SAVE = { ...newData, ...{ source: input.source, industry: input.industry, creator: input.creator, language: input.language } }
     console.log('DATA_TO_SAVE', DATA_TO_SAVE)
     insert_contractData(DATA_TO_SAVE)
     // let loginInfo = { email: input.userEmail, password: input.password }
@@ -122,9 +121,9 @@ export default function Upload() {
     const purpose = contentArray.filter((x) => x.tag && x.tag === 'h4')[0].text
     const partyA = contentArray.filter((x) => x.tag && x.tag === 'h5')[0].text
     const partyB = contentArray.filter((x) => x.tag && x.tag === 'h6')[0].text
-    DATA_NEW = { ...DATA_NEW, ...{ contractName: contractTitle, title: contractTitle, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray } }
+    DATA_NEW = { ...DATA_NEW, ...{ title: contractTitle, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray } }
     console.log('DATA_NEW', DATA_NEW)
-    // setNewData({ ...newData, ...{ contractName: contractTitle, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray } })
+    // setNewData({ ...newData, ...{ title: title, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray } })
     setNewData(DATA_NEW)
 
     // const title = filterArticle(contentArray)
@@ -861,7 +860,7 @@ export default function Upload() {
                   <>
                     <div className="flex items-center text-xs font-bold">
                       <p className=" text-slate-800">계약서 명칭</p>
-                      <p className="ml-3 font-semibold">{newData.contractName}</p>
+                      <p className="ml-3 font-semibold">{newData.title}</p>
                     </div>
                     <div className="flex items-center text-xs font-bold">
                       <p className=" text-slate-800">계약 당사자 (갑)</p>
@@ -907,15 +906,15 @@ export default function Upload() {
                         />
                       </div>
                       <div>
-                        <label htmlFor="clientName" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                        <label htmlFor="source" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                           고객사 이름
                         </label>
                         <input
                           type="text"
-                          name="clientName"
+                          name="source"
                           className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
                           placeholder="LG화학"
-                          value={input.clientName}
+                          value={input.source}
                           onChange={function (event) {
                             onInputChange(event)
                             // setDisabled(false)
@@ -988,7 +987,7 @@ export default function Upload() {
                         disabled={disabled}
                         className="flex w-full cursor-pointer place-content-center rounded-lg bg-purple-500 py-2.5 text-sm font-medium text-white hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-300 disabled:cursor-progress disabled:bg-purple-200 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
                       >
-                        로그인
+                        업로드
                       </button>
                     </form>
                     {/* <div className="space-y-0.5 text-xs font-bold ">

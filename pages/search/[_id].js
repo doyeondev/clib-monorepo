@@ -49,9 +49,9 @@ export default function Result({ data }) {
     <>
       <Layout>
         <Head>
-          <title>{`클립 | ${data.contractName}`}</title>
+          <title>{`클립 | ${data.title}`}</title>
           <meta name="description" content="Clib My Asset" />
-          <link rel="icon" href="/favicon.ico" />
+          <link rel="icon" href="/icon/clib_favicon.ico" />
         </Head>
         <div className="bg-white">
           {/* 메뉴상단은 Layout.js에 있음 */}
@@ -69,11 +69,14 @@ export default function Result({ data }) {
                 <p>뒤로가기</p>
               </Link>
               {/* <button className="rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600">뒤로가기</button> */}
-              <button className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white">원문보기</button>
+              {/* <button className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white">원문보기</button> */}
+              <button onClick={() => setShowPreview(!showPreview)} className="ml-auto rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600">
+                계약서 원문보기
+              </button>
             </div>
             <div className="flex w-full flex-col border-b border-black px-8 py-6 text-sm">
               <div className="flex items-center py-2">
-                <div className="text-lg font-bold">{data.contractName}</div>
+                <div className="text-lg font-bold">{data.title}</div>
                 <div className="ml-4 rounded bg-gray-200/50 px-1 py-0.5 text-xs text-gray-600 shadow-sm">{data.source}</div>
               </div>
               <div className="flex justify-between py-2">

@@ -100,3 +100,9 @@ export function replaceArray(myArray, objKey, newValue) {
   }
   return myArray[index]
 }
+
+Array.prototype.unique = function () {
+  return Array.from(new Set(this))
+}
+
+// arr.unique()

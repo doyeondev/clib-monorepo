@@ -3,7 +3,7 @@ import Head from 'next/head'
 import Layout from '/components/layout'
 
 import useSWR from 'swr'
-import React, { useEffect, useState, Fragment, createContext, useContext } from 'react'
+import React, { useEffect, useState, Fragment } from 'react'
 import { Spinner } from '/components/clib/Spinner.js'
 
 import { getRegExp } from 'korean-regexp'
@@ -11,158 +11,37 @@ import _ from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
 
 import SidePanel from '/components/clib/Sidepanel'
-import { getContractList, getCategoryList, getContractItem } from '/pages/api/clib'
 
-// const fetcher = (url) => fetch('https://conan.ai/_functions/clibContractList').then((response) => response.json())
-const fetcher = (url) => fetch(url).then((response) => response.json())
-function useData() {
-  const { data, error, isLoading } = useSWR(`https://conan.ai/_functions/clibContractList`, fetcher)
-
-  return {
-    category: data,
-    isLoading,
-    isError: error
-  }
-}
-// const fetcher = (url: string) => axios.get(url).then((res) => res.data);
-
-// const fetcher = (...args) => fetch(...args).then((res) => res.json())
-const CategoryContext = createContext()
-// const ContractContext = createContext()
-
-// const ContractContext = createContext()
+const fetcher = () => fetch('https://conan.ai/_functions/clibContractList').then((response) => response.json())
 
 const Search = () => {
-  // const { data } = useSWR('aaa', fetcher)
-  const test = useData()
-  if (test) console.log('test', test)
-  const [assetList, setAssetList] = useState([])
-  const [contractList, setContractList] = useState([])
-  const [categoryList, setCategoryList] = useState([])
-  const [currentCategory, setCurrentCategory] = useState([])
+  const { data } = useSWR('search', fetcher)
 
-  const [loaded, setLoaded] = useState(false)
-  const [userApproved, setUserApproved] = useState(false)
-
-  const AppProvider = ({ contexts, children }) =>
-    contexts.reduce(
-      (prev, context) =>
-        React.createElement(context, {
-          children: prev
-        }),
-      children
-    )
-  // const { data, error } = useSWR('https://conan.ai/_functions/clibContractList', fetcher)
-  // const { categories } = useSWR('https://conan.ai/_functions/clibCategoryList', fetcher)
-
-  // console.log('contracts', contracts)
-  // console.log('categories', categories)
-
-  // if (data) console.log('data : ', data)
-  // if (categories) console.log('categories : ', categories)
-
-  // setContractList(data.items)
+  if (data) console.log('data', data)
 
   useEffect(() => {
     async function getPageData() {
       // localStorage.theme = 'light'
       //   location.assign('/')
-      // if (sessionStorage.getItem('item_key')) sessionStorage.removeItem('item_key') // remove contract key session
-      let approvalStatus = sessionStorage.getItem('approvalStatus')
-      if (approvalStatus === 'true') setUserApproved(true)
-      // approvalStatus && approvalStatus === true &&
-
-      if (loaded !== true) {
-        // const contracts = await getContractList()
-        const categories = await getCategoryList()
-        // console.log('contracts', contracts)
-        console.log('categories[0].assets(contracts)', categories[0].assets)
-        console.log('categories', categories)
-        // setContractList(contracts)
-        // setOriginalList(contracts)
-        setContractList(categories[0].assets)
-        setAssetList(categories[0].assets)
-        setCategoryList(categories)
-        setCurrentCategory(categories[0])
-        setLoaded(true)
-      }
+      if (sessionStorage.getItem('item_key')) sessionStorage.removeItem('item_key') // remove contract key session
     }
     getPageData()
   }, [])
 
-  const updateCategory = (e) => {
-    console.log('clicked id', e.target.id)
-    const newCategory = categoryList.filter((x) => x._id === e.target.id)[0]
-    // let newContractList = [...contractList]
-    // newContractList = newCategory.assets
-    console.log('newCategory', newCategory)
-
-    setContractList(newCategory.assets)
-    setCurrentCategory(newCategory)
-    // alert(`Add ${newItem}`)
-  }
-
-  useEffect(() => {
-    console.log('contractList', contractList)
-    console.log('contractList2', currentCategory)
-  }, [contractList, currentCategory])
-
-  // // 전역 로딩 상태
-  // if (!user) return <Spinner/>
-
-  // return <div>
-  //   <Navbar user={user} />
-  //   <Content user={user} />
-  // </div>
-  const onInputChange = (e) => {
-    if (e.target === '1234') {
-      setUserApproved(true)
-      sessionStorage.setItem('approvalStatus', true)
-    }
-  }
   return (
     <Layout>
       <Head>
         <title>클립 | 계약서 검색</title>
         <meta name="description" content="Clib My Asset" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/icon/clib_favicon.ico" />
       </Head>
-      {/* <AppProvider contexts={[HeaderProvider, UserProvider]}> */}
-      {userApproved !== true ? (
-        <div className="center justify flex min-h-[calc(100vh-120px)] flex-col items-center bg-white">
-          <div className="my-auto flex w-fit">
-            <input
-              type="password"
-              name="password"
-              id="password"
-              placeholder="Type Access Code"
-              // value={input.password}
-              onChange={(e) => onInputChange(e)}
-              className="block w-[320px] rounded-md border-gray-400 bg-gray-50 p-2.5 py-1.5 text-center text-sm text-gray-700 placeholder:text-slate-500 hover:border-purple-400 focus:border-none focus:placeholder-transparent focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500"
-              required=""
-            />
-          </div>
-        </div>
-      ) : (
-        <CategoryContext.Provider value={{ assetList, categoryList, currentCategory, updateCategory }}>{contractList?.length > 0 ? <MainLayout contractList={contractList} /> : <Spinner />}</CategoryContext.Provider>
-      )}
-
-      {/* </AppProvider> */}
+      {data ? <MainLayout contractList={data.items} /> : <Spinner />}
     </Layout>
   )
 }
 
-// const MainLayout = ({ contractList, categoryList }) => {
 const MainLayout = ({ contractList }) => {
-  // const { items } = useContext(AppContext)
-  // let { categoryList } = useContext(CategoryContext)
-
   const [searchType, setSearchType] = useState('contract')
-
-  // const [clickedResult, setClickedResult] = useState([])
-  const [showSidebar, setShowSidebar] = useState(false)
-  const [data, setData] = useState([])
-
   const [currentData, setCurrentData] = useState([])
 
   const [articleData, setArticleData] = useState([])
@@ -176,13 +55,6 @@ const MainLayout = ({ contractList }) => {
 
   let cleanedClauseArray = []
   let match, fullData
-
-  // function toggleSlideover() {
-  //   document.getElementById('slideover-container').classList.toggle('invisible')
-  //   document.getElementById('slideover-bg').classList.toggle('opacity-0')
-  //   document.getElementById('slideover-bg').classList.toggle('opacity-50')
-  //   document.getElementById('slideover').classList.toggle('translate-x-full')
-  // }
 
   useEffect(() => {
     console.log('searchType', searchType)
@@ -247,7 +119,7 @@ const MainLayout = ({ contractList }) => {
     setCurrentData(_.chunk(contractList, 5))
     setMaxIndex(_.chunk(contractList, 5).length - 1)
     console.log('_.chunk(contractList, 5)', _.chunk(contractList, 5))
-  }, [contractList])
+  }, [])
 
   const onClickHandler = (e) => {
     console.log('clicked - onClickHandler')
@@ -275,23 +147,20 @@ const MainLayout = ({ contractList }) => {
 
   if (searchType === 'contract') {
     return (
-      // <div className="h-full bg-white">
-      <>
+      <div className="bg-white">
         {contractGroup.map((elem, index) => {
           if (currentIndex === index) {
             // return <DashboardWrapper dataList={elem} currentIndex={currentIndex} maxIndex={maxIndex} onClickHandler={onClickHandler} deleteItemHandler={deleteItemHandler} key={uuidv4()} />
             return (
-              <div key={index} className="flex min-h-[calc(100vh-120px)] flex-col bg-white">
-                <SearchWrapper contractList={contractList} searchType={searchType} setSearchType={setSearchType} setData={setData} setShowSidebar={setShowSidebar} showSidebar={showSidebar} />
-                {/* <ExSlider toggleSlideover={toggleSlideover} /> */}
-                <ContractList contractList={elem} setCurrentIndex={setCurrentIndex} currentIndex={currentIndex} maxIndex={maxIndex} data={data} setData={setData} setShowSidebar={setShowSidebar} showSidebar={showSidebar} />
-                {/* <DashboardFooter onClickHandler={onClickHandler} currentIndex={currentIndex} maxIndex={maxIndex} /> */}
+              <div key={index}>
+                <SearchWrapper contractList={contractList} searchType={searchType} setSearchType={setSearchType} />
+                <ContractList contractList={elem} />
+                <DashboardFooter onClickHandler={onClickHandler} currentIndex={currentIndex} maxIndex={maxIndex} />
               </div>
             )
           }
         })}
-      </>
-      // </div>
+      </div>
     )
   } else if (searchType === 'article') {
     return (
@@ -303,122 +172,43 @@ const MainLayout = ({ contractList }) => {
   }
 }
 
-const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, data, setData, setShowSidebar, showSidebar }) => {
-  const [clickedItem, setClickedItem] = useState([])
-
-  let { categoryList, currentCategory, updateCategory } = useContext(CategoryContext)
-  console.log('currentCategory', currentCategory)
-
-  const paginationOnClick = (e) => {
-    console.log('clicked - onClickHandler')
-    const btnId = e.target.id
-    const type = e.target.name
-    console.log('btnId : ', e.target.id)
-    console.log('currentIndex', currentIndex)
-    console.log('maxIndex', maxIndex)
-
-    if (btnId && type === 'paginationBtn') {
-      if (btnId === 'btnNext' && currentIndex < maxIndex) {
-        console.log('entered case 1')
-        setCurrentIndex(currentIndex + 1)
-      } else if (btnId === 'btnPrevious' && currentIndex > 0) {
-        console.log('entered case 2')
-        setCurrentIndex(currentIndex - 1)
-      }
-    }
-
-    if (btnId && type === 'paginationNum') {
-      // console.log('clicked', btnId)
-      setCurrentIndex(parseInt(btnId))
-    }
-  }
-  // onClickHandler={onClickHandler} currentIndex={currentIndex} maxIndex={maxIndex}
-
-  function setSidebarData(item, parent) {
-    setClickedItem(item)
-    console.log('item', item)
-    console.log('parent', parent)
-
-    let match = contractList.filter((x) => x._id === parent._id)
-    console.log('match', match[0])
-    setData(match[0])
-
-    setShowSidebar(!showSidebar)
-    // toggleSlideover()
-    // let match = contractList.filter((x) => x.id === item_id)
-  }
-
+const ContractList = ({ contractList }) => {
   return (
-    <>
-      <main className="mx-auto w-[920px] px-[10vw] py-6">
-        <div className="flex w-fit items-center space-x-3 px-8">
-          {categoryList.map((elem, index) => {
-            return (
-              <div onClick={(e) => updateCategory(e)} id={elem._id} className={`cursor-pointer rounded px-2 py-1 shadow-sm ${elem._id === currentCategory._id ? 'bg-gray-900' : 'bg-gray-100 hover:bg-gray-200'}`} key={index}>
-                <p className={`pointer-events-none text-[13px] ${elem._id === currentCategory._id ? 'text-white' : 'text-gray-500'}`}>{elem.title}</p>
-              </div>
-            )
-          })}
-        </div>
-        {contractList.map((item, index) => {
-          // console.log('item', item)
-          return (
-            <div key={item._id} className="mt-4 flex w-full border-t border-dotted border-gray-400 px-8 pt-4">
-              {/* <div key={item._id} className="mt-4 flex w-full border-b pb-4"> */}
-              {/* <div className="h-auto w-5 flex-none grow border-l-4 border-gray-600"></div> */}
-              <div className="flex w-full grow flex-col space-y-4 border-gray-300 text-sm">
-                {/* <Link href={`/clib/search/${item._id}`} className="group flex flex-col"> */}
-                <div onClick={(e) => setSidebarData(item.article, item)} className="group flex cursor-pointer flex-col">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className="flex">
-                      <div className="grow text-base font-bold tracking-wide text-gray-700 hover:text-gray-800 group-hover:underline">{item.title}</div>
-                      <div className="ml-4 flex items-center space-x-2 text-xs">
-                        <p className="text-gray-900">관련분야</p>
-                        {item.categories.map((category) => {
-                          // console.log('item', item)
-                          return (
-                            <div key={category._id} className="rounded bg-fuchsia-100 px-1.5 py-0.5 text-gray-700">
-                              {category.title}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                    {/* <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">{item.source}</div> */}
-                    <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">출처: {item.source}</div>
-                  </div>
-                  <div className="flex justify-between text-[13px]">
-                    <div className="flex flex-col">
-                      <p className="text-gray-500">계약 당사자(갑)</p>
-                      <p className="text-gray-800">{item.partyA}</p>
-                    </div>
-                    <div className="flex flex-col">
-                      <p className="text-gray-500">계약 당사자(을)</p>
-                      <p className="text-gray-800">{item.partyB}</p>
-                    </div>
-                    <div className="flex flex-col">
-                      <p className="text-gray-500">산업</p>
-                      <p className="text-gray-800">{item.industry}</p>
-                    </div>
-                    {/* <div className="flex flex-col">
-                      <p className="text-gray-500">출처</p>
-                      <p className="text-gray-800">{item.source}</p>
-                    </div> */}
-                  </div>
-                  {/* </Link> */}
+    <main className="mx-auto w-[840px] px-[10vw] py-6">
+      {contractList.map((item, index) => {
+        return (
+          <div key={item._id} className="mt-4 flex w-full border-b pb-4">
+            <div className="h-auto w-5 flex-none grow border-l-4 border-[#0f4a86]"></div>
+            <div className="flex w-full grow flex-col space-y-4 border-gray-300 text-sm">
+              <Link href={`/clib/search/${item._id}`} className="group flex flex-col">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="grow text-base font-bold tracking-wide text-[#0675ac] hover:text-[#0675ac] group-hover:underline">{item.title}</div>
+                  <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">{item.source}</div>
                 </div>
-                <div className="flex flex-col text-[13px]">
-                  <p className="text-gray-500">계약의 목적</p>
-                  <p className="line-clamp-2 text-gray-800">{item.purpose}</p>
+                <div className="flex justify-between text-[13px]">
+                  <div className="flex flex-col">
+                    <p className="text-gray-500">계약 당사자(갑)</p>
+                    <p className="text-gray-800">{item.partyA}</p>
+                  </div>
+                  <div className="flex flex-col">
+                    <p className="text-gray-500">계약 당사자(을)</p>
+                    <p className="text-gray-800">{item.partyB}</p>
+                  </div>
+                  <div className="flex flex-col">
+                    <p className="text-gray-500">산업</p>
+                    <p className="text-gray-800">{item.industry}</p>
+                  </div>
                 </div>
+              </Link>
+              <div className="flex flex-col text-[13px]">
+                <p className="text-gray-500">계약의 목적</p>
+                <p className="line-clamp-2 text-gray-800">{item.purpose}</p>
               </div>
             </div>
-          )
-        })}
-        {showSidebar === true && <SidePanel clickedItem={clickedItem} data={data} showSidebar={showSidebar} setShowSidebar={setShowSidebar} />}
-      </main>
-      <DashboardFooter onClickHandler={paginationOnClick} currentIndex={currentIndex} maxIndex={maxIndex} />
-    </>
+          </div>
+        )
+      })}
+    </main>
   )
 }
 
@@ -455,15 +245,14 @@ const ArticleList = ({ contractList, articleGroup, currentIndex, setCurrentIndex
 
   function setSidebarData(item, parent) {
     setClickedItem(item)
-    // console.log('item', item)
-    // console.log('parent', parent)
+    console.log('item', item)
+    console.log('parent', parent)
 
-    // let match = contractList.filter((x) => x._id === parent._id)
-    // console.log('match', match[0])
-    setData(parent[0])
+    let match = contractList.filter((x) => x._id === parent._id)
+    console.log('match', match[0])
+    setData(match[0])
 
     setShowSidebar(!showSidebar)
-    // toggleSlideover()
     // let match = contractList.filter((x) => x.id === item_id)
   }
 
@@ -474,19 +263,12 @@ const ArticleList = ({ contractList, articleGroup, currentIndex, setCurrentIndex
     }
   }, [data, clickedItem])
 
-  // function toggleSlideover() {
-  //   document.getElementById('slideover-container').classList.toggle('invisible')
-  //   document.getElementById('slideover-bg').classList.toggle('opacity-0')
-  //   document.getElementById('slideover-bg').classList.toggle('opacity-50')
-  //   document.getElementById('slideover').classList.toggle('translate-x-full')
-  // }
-
   return (
-    <main className="mx-auto flex w-[920px] flex-col justify-between px-[10vw] py-6">
+    <main className="mx-auto w-[840px] px-[10vw] py-6">
       {articleGroup[currentIndex].map((item, index) => {
         // console.log('item', item)
         return (
-          <div key={item._id} className="mt-4 flex w-full border-b pb-4">
+          <div key={index} className="mt-4 flex w-full border-b pb-4">
             <div className="h-auto w-5 flex-none grow border-l-4 border-gray-500"></div>
             <div className="flex w-full grow flex-col text-sm">
               <div className="flex flex-col">
@@ -504,15 +286,15 @@ const ArticleList = ({ contractList, articleGroup, currentIndex, setCurrentIndex
                 </div>
                 <div className="flex flex-col text-[13px] leading-relaxed">
                   <p className="w-fit font-medium text-gray-500">본문 내용</p>
-                  {item.paragraph.map((elem, index) => {
+                  {item.paragraph.map((elem) => {
                     if (elem.tag === 'p') {
                       return (
-                        <p key={index} className="line-clamp-3 text-gray-900">
+                        <p key={elem._id} className="line-clamp-3 text-gray-900">
                           {elem.text}
                         </p>
                       )
                     } else if (elem.tag === 'ol') {
-                      return <div key={index} dangerouslySetInnerHTML={{ __html: elem.html }} className="preview-doc line-clamp-3 text-gray-900"></div>
+                      return <div key={elem._id} dangerouslySetInnerHTML={{ __html: elem.html }} className="preview-doc line-clamp-3 text-gray-900"></div>
                     }
                   })}
                 </div>
@@ -540,18 +322,17 @@ const ArticleList = ({ contractList, articleGroup, currentIndex, setCurrentIndex
           </div>
         )
       })}
-      {/* {showSidebar === true && <SidePanel clickedItem={clickedItem} data={data} showSidebar={showSidebar} setShowSidebar={setShowSidebar} />} */}
       {showSidebar === true && <SidePanel clickedItem={clickedItem} data={data} showSidebar={showSidebar} setShowSidebar={setShowSidebar} />}
       <DashboardFooter onClickHandler={paginationOnClick} currentIndex={currentIndex} maxIndex={maxIndex} />
     </main>
   )
 }
 
-const SearchWrapper = ({ contractList, searchType, setSearchType, setData, setShowSidebar, showSidebar }) => {
+const SearchWrapper = ({ contractList, searchType, setSearchType }) => {
   return (
-    <section className="mt-6 flex flex-col px-[10vw] py-4">
+    <section className="mt-6 flex flex-col px-[10vw] py-6">
       <aside className="mx-auto flex w-fit items-center gap-x-2 text-2xl">
-        {/* {searchType === 'contract' ? (
+        {searchType === 'contract' ? (
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FF6F53" className="mr-1 h-6 w-6">
             <path
               fillRule="evenodd"
@@ -568,18 +349,18 @@ const SearchWrapper = ({ contractList, searchType, setSearchType, setData, setSh
               clipRule="evenodd"
             />
           </svg>
-        )} */}
-        <h2 className="text-xl font-semibold">{searchType === 'contract' ? '어떤 계약서 양식이 필요하신가요?' : '계약서 조항을 검색하세요!'}</h2>
+        )}
+
+        <h2 className="font-semibold">{searchType === 'contract' ? '어떤 계약서 양식이 필요하신가요?' : '계약서 조항을 검색하세요!'}</h2>
       </aside>
-      <SearchInput contractList={contractList} searchType={searchType} setSearchType={setSearchType} setData={setData} setShowSidebar={setShowSidebar} showSidebar={showSidebar} />
+      <SearchInput contractList={contractList} searchType={searchType} setSearchType={setSearchType} />
     </section>
   )
 }
 
-const SearchInput = ({ contractList, searchType, setSearchType, setData, setShowSidebar, showSidebar }) => {
+const SearchInput = ({ contractList, searchType, setSearchType }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResult, setSearchResult] = useState([])
-  let { assetList } = useContext(CategoryContext)
 
   useEffect(() => {
     let filteredList
@@ -610,7 +391,7 @@ const SearchInput = ({ contractList, searchType, setSearchType, setData, setShow
   }
   // 계약서 제목만 검색함
   function runSearch(term) {
-    let match = assetList.filter((x) => x.title.match(getRegExp(term)) !== null)
+    let match = contractList.filter((x) => x.title.match(getRegExp(term)) !== null)
     console.log('match', match)
     return match
   }
@@ -618,13 +399,13 @@ const SearchInput = ({ contractList, searchType, setSearchType, setData, setShow
     // let clauses = 여기 부분!!
     let mergedClauseArray = []
     let matchArray = []
-    for (let i = 0; i < assetList.length; i++) {
-      console.log('assetList[i].clauseArray', assetList[i])
-      let match = assetList[i].clauseArray.filter((x) => x.text.match(getRegExp(term)) !== null)
+    for (let i = 0; i < contractList.length; i++) {
+      console.log('contractList[i].clauseArray', contractList[i])
+      let match = contractList[i].clauseArray.filter((x) => x.text.match(getRegExp(term)) !== null)
       console.log('match', match)
       if (match.length > 0) {
         for (let j = 0; j < match.length; j++) {
-          match[j].source = assetList[i]
+          match[j].source = contractList[i]
         }
         matchArray.push(match)
       }
@@ -637,14 +418,14 @@ const SearchInput = ({ contractList, searchType, setSearchType, setData, setShow
 
   return (
     <>
-      <div className="mx-auto mt-6 flex w-[640px] flex-col ">
+      <div className="mx-auto mt-6 flex w-[560px] flex-col ">
         <form className="flex w-full flex-col">
           <label htmlFor="search" className="sr-only">
             Search
           </label>
           <div className="flex w-full">
             <div className="relative w-full">
-              <div className="hidden space-x-4 py-3 text-xs font-semibold">
+              <div className="flex space-x-4 py-3 text-xs font-semibold">
                 <div onClick={(e) => resetSearch(e.target.id)} id="contract" className={`flex cursor-pointer items-center gap-x-2 rounded px-2 py-1 ${searchType === 'contract' ? 'bg-gray-200/70 ' : 'bg-white'}`} href="/clib/search">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FF6F53" className="pointer-events-none h-5 w-5">
                     <path
@@ -679,76 +460,60 @@ const SearchInput = ({ contractList, searchType, setSearchType, setData, setShow
                     type="text"
                     id="search"
                     value={searchTerm}
-                    className="block w-full rounded-lg border border-fuchsia-100 bg-fuchsia-50/30 p-2.5 ps-5 text-sm text-gray-900 hover:border-fuchsia-200 hover:bg-white focus:border-fuchsia-300 focus:bg-white focus:ring-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500"
-                    placeholder="계약서를 검색해보세요!"
+                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 ps-5 text-sm text-gray-900 hover:bg-gray-100 focus:border-none focus:ring-blue-500  dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                    placeholder="검색어를 입력하세요"
                     onChange={async (e) => setSearchTerm(e.target.value)}
                     required
                   />
                   {searchTerm.length > 0 && (
-                    <button onClick={(e) => setSearchTerm('')} type="button" className="group absolute inset-y-0 end-0 flex items-center pe-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="pointer-events-none h-5 w-5 fill-gray-400 group-hover:fill-gray-800">
-                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                    <button onClick={(e) => setSearchTerm('')} type="button" className="absolute inset-y-0 end-0 flex items-center pe-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="#6A7280" className="pointer-events-none h-5 w-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </button>
                   )}
                 </div>
                 <button
                   type="submit"
-                  // className="ms-2 flex items-center rounded-lg border border-purple-700 bg-purple-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
-                  className="three-d-gray ms-2 flex items-center rounded-lg border border-gray-700 bg-gray-800 px-3 py-2.5 text-sm font-medium text-white hover:bg-gray-800/90 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:bg-gray-500 dark:hover:bg-gray-600 dark:focus:ring-gray-700"
+                  className="ms-2 inline-flex items-center rounded-lg border border-blue-700 bg-blue-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                 >
-                  <svg className="me-2 h-4 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                  <svg className="me-2 h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                     <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                   </svg>
-                  <span className="w-full">검색</span>
+                  Search
                 </button>
               </div>
             </div>
           </div>
         </form>
 
-        {searchResult.length > 0 && <SearchResult searchResult={searchResult} searchTerm={searchTerm} searchType={searchType} setData={setData} setShowSidebar={setShowSidebar} showSidebar={showSidebar} />}
+        {searchResult.length > 0 && <SearchResult searchResult={searchResult} searchTerm={searchTerm} searchType={searchType} />}
       </div>
     </>
   )
 }
 
-const SearchResult = ({ searchResult, searchTerm, searchType, setData, setShowSidebar, showSidebar }) => {
-  function setSidebarData(item) {
-    // setClickedItem(item)
-    console.log('item', item)
-    // console.log('parent', parent)
-
-    // let match = contractList.filter((x) => x._id === parent._id)
-    // console.log('match', match[0])
-    setData(item)
-    setShowSidebar(!showSidebar)
-  }
-
+const SearchResult = ({ searchResult, searchTerm, searchType }) => {
   console.log('searchResult', searchResult)
   if (searchResult.length > 0) {
     return (
-      <div className="flex flex-col rounded rounded-b-lg bg-white shadow">
+      <div className="flex flex-col rounded bg-gray-100 shadow-sm">
         {searchResult.map((resultObj, index) => {
           let matchingTerm, additionalInfo
+
           // 1. 계약서 제목 검색
           if (searchType === 'contract') {
-            matchingTerm = resultObj.title.replace(searchTerm, `<span class="font-bold text-purple-800">${searchTerm}</span>`)
+            matchingTerm = resultObj.title.replace(searchTerm, `<span class="font-bold text-blue-800">${searchTerm}</span>`)
             additionalInfo = `<p>${resultObj.source}</p>`
             return (
-              // <Link key={index} href={`/clib/search/${resultObj._id}`} className="flex cursor-pointer items-center justify-between border-b bg-white px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50/50">
-              // <Link onClick={setSearchedItem} key={index} href={`/clib/search/${resultObj._id}`} className="flex cursor-pointer items-center justify-between px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-100">
-              //   <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className=""></p>
-              //   <div dangerouslySetInnerHTML={{ __html: additionalInfo }} className="rounded-lg bg-slate-50 px-2 py-1 text-xs text-gray-600 shadow-sm"></div>
-              // </Link>
-              <div key={index} id={resultObj._id} onClick={(e) => setSidebarData(resultObj)} className="flex cursor-pointer items-center justify-between px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-100">
+              <Link key={index} href={`/clib/search/${resultObj._id}`} className="flex cursor-pointer items-center justify-between border-b bg-white px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50/50">
                 <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className=""></p>
                 <div dangerouslySetInnerHTML={{ __html: additionalInfo }} className="rounded-lg bg-slate-50 px-2 py-1 text-xs text-gray-600 shadow-sm"></div>
-              </div>
+              </Link>
             )
           } else if (searchType === 'article') {
             console.log('resultObj', resultObj)
-            matchingTerm = resultObj.text.replace(searchTerm, `<span class="font-bold text-purple-800">${searchTerm}</span>`)
+            matchingTerm = resultObj.text.replace(searchTerm, `<span class="font-bold text-blue-800">${searchTerm}</span>`)
             additionalInfo = `<p>${resultObj.source.title} (${resultObj.source.source})</p>`
             return (
               <Link
@@ -770,15 +535,13 @@ const SearchResult = ({ searchResult, searchTerm, searchType, setData, setShowSi
   }
 }
 {
-  /* <main className="mx-auto w-[920px] px-[10vw] py-6"> */
+  /* <main className="mx-auto w-[840px] px-[10vw] py-6"> */
 }
 
 const DashboardFooter = ({ onClickHandler, currentIndex, maxIndex }) => {
   return (
     <>
-      {/* mx-auto w-[920px] px-[10vw]  */}
-      <div className="mx-auto mt-auto flex w-[920px] items-center justify-between self-end px-[10vw] py-6">
-        {/* <div className="absolute bottom-0 left-0 right-0 mx-auto mb-auto mt-4 flex w-[920px] items-center justify-between px-[10vw] py-6"> */}
+      <div className="mx-auto flex items-center justify-between py-6">
         <button
           id="btnPrevious"
           name="paginationBtn"
@@ -790,7 +553,7 @@ const DashboardFooter = ({ onClickHandler, currentIndex, maxIndex }) => {
           </svg>
           이전
         </button>
-        <div className="flex items-center gap-x-3">
+        <div className="items-center gap-x-3 lg:flex">
           <FooterPagination currentIndex={currentIndex} maxIndex={maxIndex} onClickHandler={onClickHandler} />
         </div>
 
@@ -819,7 +582,7 @@ const FooterPagination = ({ currentIndex, maxIndex, onClickHandler }) => {
   for (let i = 0; i <= maxIndex; i++) {
     if (i === currentIndex) {
       pagination.push(
-        <Link href="#" id={i} name="paginationNum" onClick={onClickHandler} className="rounded-md bg-purple-100/60 px-2 py-1 text-sm text-purple-500 dark:bg-gray-800" key={uuidv4()}>
+        <Link href="#" id={i} name="paginationNum" onClick={onClickHandler} className="rounded-md bg-blue-100/60 px-2 py-1 text-sm text-blue-500 dark:bg-gray-800" key={uuidv4()}>
           {i + 1}
         </Link>
       )
@@ -835,39 +598,3 @@ const FooterPagination = ({ currentIndex, maxIndex, onClickHandler }) => {
 }
 
 export default Search
-
-const ExSlider = ({ toggleSlideover }) => {
-  return (
-    <div className="flex h-screen w-screen items-center justify-center">
-      <div onClick={(e) => toggleSlideover()} className="cursor-pointer rounded border border-gray-300 px-5 py-2 text-sm text-gray-500 hover:bg-gray-100">
-        Toggle Slide-over
-      </div>
-      <div id="slideover-container" className="invisible fixed inset-0 h-full w-full">
-        <div onClick={(e) => toggleSlideover()} id="slideover-bg" className="absolute inset-0 h-full w-full bg-gray-900 opacity-0 transition-all duration-500 ease-out"></div>
-        <div id="slideover" className="absolute right-0 h-full w-96 translate-x-full bg-white transition-all duration-300 ease-out">
-          <div className="absolute right-0 top-0 mr-5 mt-5 flex h-8 w-8 cursor-pointer items-center justify-center text-gray-600">
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ;<div class="flex h-screen w-screen items-center justify-center">
-//   <div onclick="toggleSlideover()" class="cursor-pointer rounded border border-gray-300 px-5 py-2 text-sm text-gray-500 hover:bg-gray-100">
-//     Toggle Slide-over
-//   </div>
-//   <div id="slideover-container" class="invisible fixed inset-0 h-full w-full">
-//     <div onclick="toggleSlideover()" id="slideover-bg" class="absolute inset-0 h-full w-full bg-gray-900 opacity-0 transition-all duration-500 ease-out"></div>
-//     <div onclick="toggleSlideover()" id="slideover" class="absolute right-0 h-full w-96 translate-x-full bg-white transition-all duration-300 ease-out">
-//       <div class="absolute right-0 top-0 mr-5 mt-5 flex h-8 w-8 cursor-pointer items-center justify-center text-gray-600">
-//         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-//           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-//         </svg>
-//       </div>
-//     </div>
-//   </div>
-// </div>
