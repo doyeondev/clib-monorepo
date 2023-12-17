@@ -44,14 +44,15 @@ const Search = () => {
   const [loaded, setLoaded] = useState(false)
   const [userApproved, setUserApproved] = useState(false)
 
-  const AppProvider = ({ contexts, children }) =>
-    contexts.reduce(
-      (prev, context) =>
-        React.createElement(context, {
-          children: prev
-        }),
-      children
-    )
+  // const AppProvider = ({ contexts, children }) =>
+  //   contexts.reduce(
+  //     (prev, context) =>
+  //       React.createElement(context, {
+  //         children: prev
+  //       }),
+  //     children
+  //   )
+
   // const { data, error } = useSWR('https://conan.ai/_functions/clibContractList', fetcher)
   // const { categories } = useSWR('https://conan.ai/_functions/clibCategoryList', fetcher)
 
