@@ -14,6 +14,8 @@ import SidePanel from '/components/clib/Sidepanel'
 import { getContractList, getCategoryList, getContractItem } from '/pages/api/clib'
 import { NoBackpackSharp } from '@mui/icons-material'
 
+import { SessionContext } from './_app'
+
 // const fetcher = (url) => fetch('https://conan.ai/_functions/clibContractList').then((response) => response.json())
 const fetcher = (url) => fetch(url).then((response) => response.json())
 // function useData() {
@@ -34,6 +36,8 @@ const CategoryContext = createContext()
 // const ContractContext = createContext()
 
 const Search = () => {
+  const { userApproved, onInputChange } = useContext(SessionContext)
+
   const [authModalOpen, setAuthModalOpen] = useState(false)
 
   // const { data } = useSWR('aaa', fetcher)
@@ -45,7 +49,7 @@ const Search = () => {
   const [currentCategory, setCurrentCategory] = useState([])
 
   const [loaded, setLoaded] = useState(false)
-  const [userApproved, setUserApproved] = useState(false)
+  // const [userApproved, setUserApproved] = useState(false)
 
   // const AppProvider = ({ contexts, children }) =>
   //   contexts.reduce(
@@ -72,9 +76,9 @@ const Search = () => {
       // localStorage.theme = 'light'
       //   location.assign('/')
       // if (sessionStorage.getItem('item_key')) sessionStorage.removeItem('item_key') // remove contract key session
-      let auth_status = sessionStorage.getItem('auth_status')
-      if (auth_status === 'true') setUserApproved(true)
-      // auth_status && auth_status === true &&
+
+      // let auth_status = sessionStorage.getItem('auth_status')
+      // if (auth_status === 'true') setUserApproved(true)
 
       if (loaded !== true) {
         // const contracts = await getContractList()
@@ -118,12 +122,13 @@ const Search = () => {
   //   <Navbar user={user} />
   //   <Content user={user} />
   // </div>
-  const onInputChange = (e) => {
-    if (e.target.value === '1234') {
-      setUserApproved(true)
-      sessionStorage.setItem('auth_status', true)
-    }
-  }
+
+  // const onInputChange = (e) => {
+  //   if (e.target.value === '1234') {
+  //     setUserApproved(true)
+  //     sessionStorage.setItem('auth_status', true)
+  //   }
+  // }
 
   return (
     <Layout>
@@ -132,7 +137,7 @@ const Search = () => {
         <meta name="description" content="Clib My Asset" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {userApproved !== true ? (
+      {/* {userApproved !== true ? (
         <main className="center justify flex min-h-[calc(100vh-120px)] flex-col items-center bg-white">
           <div className="my-auto flex w-fit">
             <input
@@ -148,7 +153,8 @@ const Search = () => {
         </main>
       ) : (
         <CategoryContext.Provider value={{ assetList, categoryList, currentCategory, updateCategory }}>{contractList?.length > 0 ? <MainLayout contractList={contractList} /> : <Spinner />}</CategoryContext.Provider>
-      )}
+      )} */}
+      <CategoryContext.Provider value={{ assetList, categoryList, currentCategory, updateCategory }}>{contractList?.length > 0 ? <MainLayout contractList={contractList} /> : <Spinner />}</CategoryContext.Provider>
     </Layout>
   )
   // } else {
