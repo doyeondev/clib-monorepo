@@ -4,7 +4,7 @@ import Image from 'next/image'
 export default function Footer() {
   return (
     <>
-      <footer className="body-font flex h-[60px] w-full px-[20vw] text-xs">
+      <footer className="body-font flex h-[60px] w-full px-[15vw] text-xs sm:px-[10vw]">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center space-x-3">
             <p className="mt-4 text-gray-500 sm:mt-0">© 2023 Clib (주식회사 마이리걸팀)</p>

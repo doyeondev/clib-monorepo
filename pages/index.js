@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import SidePanel from '/components/clib/Sidepanel'
 import { getContractList, getCategoryList, getContractItem } from '/pages/api/clib'
+import { NoBackpackSharp } from '@mui/icons-material'
 
 // const fetcher = (url) => fetch('https://conan.ai/_functions/clibContractList').then((response) => response.json())
 const fetcher = (url) => fetch(url).then((response) => response.json())
@@ -33,6 +34,8 @@ const CategoryContext = createContext()
 // const ContractContext = createContext()
 
 const Search = () => {
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+
   // const { data } = useSWR('aaa', fetcher)
   // const test = useData()
   // if (test) console.log('test', test)
@@ -69,9 +72,9 @@ const Search = () => {
       // localStorage.theme = 'light'
       //   location.assign('/')
       // if (sessionStorage.getItem('item_key')) sessionStorage.removeItem('item_key') // remove contract key session
-      let approvalStatus = sessionStorage.getItem('approvalStatus')
-      if (approvalStatus === 'true') setUserApproved(true)
-      // approvalStatus && approvalStatus === true &&
+      let auth_status = sessionStorage.getItem('auth_status')
+      if (auth_status === 'true') setUserApproved(true)
+      // auth_status && auth_status === true &&
 
       if (loaded !== true) {
         // const contracts = await getContractList()
@@ -118,9 +121,10 @@ const Search = () => {
   const onInputChange = (e) => {
     if (e.target.value === '1234') {
       setUserApproved(true)
-      sessionStorage.setItem('approvalStatus', true)
+      sessionStorage.setItem('auth_status', true)
     }
   }
+
   return (
     <Layout>
       <Head>
@@ -128,29 +132,38 @@ const Search = () => {
         <meta name="description" content="Clib My Asset" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {/* <AppProvider contexts={[HeaderProvider, UserProvider]}> */}
       {userApproved !== true ? (
-        <div className="center justify flex min-h-[calc(100vh-120px)] flex-col items-center bg-white">
+        <main className="center justify flex min-h-[calc(100vh-120px)] flex-col items-center bg-white">
           <div className="my-auto flex w-fit">
             <input
               type="password"
               name="password"
               id="password"
               placeholder="Type Access Code"
-              // value={input.password}
               onChange={(e) => onInputChange(e)}
               className="block w-[320px] rounded-md border-gray-400 bg-gray-50 p-2.5 py-1.5 text-center text-sm text-gray-700 placeholder:text-slate-500 hover:border-purple-400 focus:border-none focus:placeholder-transparent focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500"
               required=""
             />
           </div>
-        </div>
+        </main>
       ) : (
         <CategoryContext.Provider value={{ assetList, categoryList, currentCategory, updateCategory }}>{contractList?.length > 0 ? <MainLayout contractList={contractList} /> : <Spinner />}</CategoryContext.Provider>
       )}
-
-      {/* </AppProvider> */}
     </Layout>
   )
+  // } else {
+  //   return (
+  //     <Layout>
+  //       <Head>
+  //         <title>클립</title>
+  //         <meta name="description" content="Clib My Asset" />
+  //         <link rel="icon" href="/favicon.ico" />
+  //       </Head>
+  //       {/* <AppProvider contexts={[HeaderProvider, UserProvider]}> */}
+  //       {/* </AppProvider> */}
+  //     </Layout>
+  //   )
+  // }
 }
 
 // const MainLayout = ({ contractList, categoryList }) => {
@@ -352,7 +365,7 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
   return (
     <>
       <main className="mx-auto w-[920px] px-[10vw] py-6">
-        <div className="flex w-fit items-center space-x-3 px-8">
+        <div className="flex w-fit flex-wrap items-center space-x-3 px-8">
           {categoryList.map((elem, index) => {
             return (
               <div onClick={(e) => updateCategory(e)} id={elem._id} className={`cursor-pointer rounded px-2 py-1 shadow-sm ${elem._id === currentCategory._id ? 'bg-gray-900' : 'bg-gray-100 hover:bg-gray-200'}`} key={index}>
@@ -374,15 +387,19 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
                     <div className="flex">
                       <div className="grow text-base font-bold tracking-wide text-gray-700 hover:text-gray-800 group-hover:underline">{item.title}</div>
                       <div className="ml-4 flex items-center space-x-2 text-xs">
-                        <p className="text-gray-900">관련분야</p>
-                        {item.categories.map((category) => {
-                          // console.log('item', item)
-                          return (
-                            <div key={category._id} className="rounded bg-fuchsia-100 px-1.5 py-0.5 text-gray-700">
-                              {category.title}
-                            </div>
-                          )
-                        })}
+                        {item.categories.length > 0 && (
+                          <>
+                            <p className="text-gray-900">관련분야</p>
+                            {item.categories.map((category) => {
+                              // console.log('item', item)
+                              return (
+                                <div key={category._id} className="rounded bg-fuchsia-100 px-1.5 py-0.5 text-gray-700">
+                                  {category.title}
+                                </div>
+                              )
+                            })}
+                          </>
+                        )}
                       </div>
                     </div>
                     {/* <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">{item.source}</div> */}
@@ -399,8 +416,12 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
                     </div>
                     <div className="flex flex-col">
                       <p className="text-gray-500">산업</p>
-                      <p className="text-gray-800">{item.industry}</p>
+                      <p className="text-gray-800">{`${item.industry ? item.industry : 'N/A'}`}</p>
                     </div>
+                    {/* {item.industry && (
+                      
+                    )} */}
+
                     {/* <div className="flex flex-col">
                       <p className="text-gray-500">출처</p>
                       <p className="text-gray-800">{item.source}</p>
@@ -630,15 +651,13 @@ const SearchInput = ({ contractList, searchType, setSearchType, setData, setShow
         matchArray.push(match)
       }
     }
-    // console.log('mergedClauseArray', mergedClauseArray)
     console.log('matchArray', _.flatten(matchArray))
     return _.flatten(matchArray)
-    // let match = contractList.filter((x) => x.text.match(getRegExp(term)) !== null)
   }
 
   return (
     <>
-      <div className="mx-auto mt-6 flex w-[640px] flex-col ">
+      <div className="mx-auto mt-6 flex w-[540px] flex-col">
         <form className="flex w-full flex-col">
           <label htmlFor="search" className="sr-only">
             Search
@@ -778,13 +797,13 @@ const DashboardFooter = ({ onClickHandler, currentIndex, maxIndex }) => {
   return (
     <>
       {/* mx-auto w-[920px] px-[10vw]  */}
-      <div className="mx-auto mt-auto flex w-[920px] items-center justify-between self-end px-[10vw] py-6">
+      <div className="mx-auto mt-auto flex w-[920px] items-center justify-between self-end px-[calc(10vw+32px)] py-6">
         {/* <div className="absolute bottom-0 left-0 right-0 mx-auto mb-auto mt-4 flex w-[920px] items-center justify-between px-[10vw] py-6"> */}
         <button
           id="btnPrevious"
           name="paginationBtn"
           onClick={onClickHandler}
-          className="flex w-[130px] cursor-pointer place-content-center gap-x-2 rounded-md border bg-white py-2 text-sm capitalize text-gray-700 transition-colors duration-200 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+          className="flex w-[90px] cursor-pointer place-content-center gap-x-2 rounded-md border bg-white py-2 text-sm capitalize text-gray-700 transition-colors duration-200 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="pointer-events-none h-5 w-5 rtl:-scale-x-100">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 15.75L3 12m0 0l3.75-3.75M3 12h18" />
@@ -799,7 +818,7 @@ const DashboardFooter = ({ onClickHandler, currentIndex, maxIndex }) => {
           id="btnNext"
           name="paginationBtn"
           onClick={onClickHandler}
-          className="flex w-[130px] cursor-pointer place-content-center gap-x-2 rounded-md border bg-white py-2 text-sm capitalize text-gray-700 transition-colors duration-200 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+          className="flex w-[90px] cursor-pointer place-content-center gap-x-2 rounded-md border bg-white py-2 text-sm capitalize text-gray-700 transition-colors duration-200 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
         >
           다음
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="pointer-events-none h-5 w-5 rtl:-scale-x-100">

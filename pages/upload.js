@@ -36,12 +36,24 @@ let DATA_NEW = {
 const now = new Date()
 
 export default function Upload() {
+  // const [isOpen, setOpen] = useState(false)
+  // const [items, setItem] = useState(data)
+  // const [selectedItem, setSelectedItem] = useState(null)
+
+  // const toggleDropdown = () => setOpen(!isOpen)
+
+  // const handleItemClick = (id) => {
+  //   selectedItem == id ? setSelectedItem(null) : setSelectedItem(id)
+  // }
+
+  const [selectedItem, setSelectedItem] = useState(null)
   const [input, setInput] = useState({
     source: '',
     industry: '',
     language: '',
     creator: ''
   })
+  const [metaData, setMetaData] = useState({ purpose: '', partyA: '', partyB: '' })
   const [disabled, setDisabled] = useState(false)
 
   const [currentMemoIdx, setCurrentMemoIdx] = useState(0) // 선택된 메모의 인덱스. 디폴트는 첫번째 메모로 지정함.
@@ -78,7 +90,9 @@ export default function Upload() {
   useEffect(() => {
     prepareMemoData()
   }, [toggleSearch, searchInput])
-
+  useEffect(() => {
+    console.log('metaData', metaData)
+  }, [metaData])
   // Step2
   function prepareMemoData() {
     if (toggleSearch === false) {
@@ -118,9 +132,13 @@ export default function Upload() {
     console.log('[useEffect] groupedArray', groupedArray)
     const articles = contentArray.filter((x) => x.tag && x.tag === 'h2')
     const contractTitle = contentArray.filter((x) => x.tag && x.tag === 'h1')[0].text
-    const purpose = contentArray.filter((x) => x.tag && x.tag === 'h4')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h4')[0].text : ''
-    const partyA = contentArray.filter((x) => x.tag && x.tag === 'h5')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h5')[0].text : ''
-    const partyB = contentArray.filter((x) => x.tag && x.tag === 'h6')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h6')[0].text : ''
+    const purpose = metaData?.purpose
+    const partyA = metaData?.partyA
+    const partyB = metaData?.partyB
+
+    // const purpose = contentArray.filter((x) => x.tag && x.tag === 'h4')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h4')[0].text : ''
+    // const partyA = contentArray.filter((x) => x.tag && x.tag === 'h5')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h5')[0].text : ''
+    // const partyB = contentArray.filter((x) => x.tag && x.tag === 'h6')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h6')[0].text : ''
     DATA_NEW = { ...DATA_NEW, ...{ title: contractTitle, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray } }
     console.log('DATA_NEW', DATA_NEW)
     // setNewData({ ...newData, ...{ title: title, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray } })
@@ -132,7 +150,7 @@ export default function Upload() {
     // console.log('갑 : ', partyA)
     // console.log('을 : ', partyB)
     // console.log('조항제목 : ', articles)
-  }, [contentArray, groupedArray])
+  }, [contentArray, groupedArray, metaData])
 
   useEffect(() => {
     // setDataHolder(memoData)
@@ -330,6 +348,9 @@ export default function Upload() {
     console.log('clauseArray', clauseArray)
     for (let i = 0; i < clauseArray.length; i++) {
       console.log('clauseArray[i]', clauseArray[i].text)
+      // if(clauseArray[i].text !== undefined) {
+
+      // }
       for (let j = 0; j < spansArray.length; j++) {
         // console.log('spansArray[j]', spansArray[j].text)
 
@@ -353,7 +374,11 @@ export default function Upload() {
       }
       //   make html
       if (clauseArray[i].tag === 'br') {
-        clauseArray[i].html = '<br/>'
+        if (clauseArray[i + 1]?.tag !== 'br') {
+          clauseArray[i].html = '<br/>' // <br/>이 연속해서 나오는 않는 경우에만 넣어줌 (테이블 때문에)
+        } else {
+          clauseArray[i].html = ''
+        }
       } else if (clauseArray[i].tag === 'ol' || clauseArray[i].tag === 'ul') {
         console.log('inside list!')
         let subHtml = ''
@@ -473,55 +498,84 @@ export default function Upload() {
     let result1 = document.getElementById('result1')
 
     console.time()
-
+    let options
     reader.onloadend = function (event) {
       var arrayBuffer = reader.result
       // debugger
-      let options = {
-        //   styleMap: ["h1[style-name='제목 1'] => h1:fresh", "h2[style-name='제목 2'] => h3:fresh", "p[style-name='표준'] => h4:fresh", "p[style-name='list'] => ol > li > p:fresh"],
-        styleMap: [
-          //   "p[style-name='heading1'] => h1.title:fresh",
-          "p[style-name='TITLE'] => h1.title:fresh",
+      if (selectedItem === '엘지') {
+        console.log('엘지')
+        options = {
+          //   styleMap: ["h1[style-name='제목 1'] => h1:fresh", "h2[style-name='제목 2'] => h3:fresh", "p[style-name='표준'] => h4:fresh", "p[style-name='list'] => ol > li > p:fresh"],
+          styleMap: [
+            //   "p[style-name='heading1'] => h1.title:fresh",
+            "p[style-name='TITLE'] => h1.title:fresh",
+            // "p[style-name='제목 1'] => h1.title:fresh",
+            // "p[style-name='제목 2'] => h2:fresh",
 
-          "p[style-name='제1조'] => h2.title:fresh",
-          "p[style-name='목적'] => h4.title:fresh",
-          "p[style-name='당사자1'] => h5.title:fresh",
-          "p[style-name='당사자2'] => h6.title:fresh",
+            "p[style-name='제1조'] => h2.title:fresh",
+            "p[style-name='목적'] => h4.title:fresh",
+            "p[style-name='당사자1'] => h5.title:fresh",
+            "p[style-name='당사자2'] => h6.title:fresh",
 
-          //   "p[style-name='제1.1조'] => h3.title:fresh",
-          "p[style-name='제1.1조'] => ol.level-one > li.level-one-item:fresh",
+            //   "p[style-name='제1.1조'] => h3.title:fresh",
+            "p[style-name='제1.1조'] => ol.level-one > li.level-one-item:fresh",
 
-          "p[style-name='(가)'] => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item:fresh",
+            "p[style-name='(가)'] => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item:fresh",
 
-          //   "p[style-name='highlight'] => h3.heading-side:fresh",
-          //   'p.highlight => h3.heading-side:fresh',
-          'p.highlight => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > span.mark-up:fresh',
-          'comment-reference => sup',
-          "p[style-name='표준'] => h4.heading-side:fresh",
-          //   'p.highlight => h3.heading-side:fresh',
-          //   "p[style-name='제목 2'] => h3:fresh",
-          //   "p[style-name='heading3'] => h3:fresh",
-          //   'p.제목 2 => h3:fresh'
-          //   "p[style-name='제목 1'] => h1.heading-one:fresh",
-          //   'p.Heading2 => h2:fresh',
-          //   'p.Heading3 => h3:fresh',
-          'p.levelone => ol.level-one > li.level-one-item:fresh',
-          'p.leveltwo => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item:fresh'
-          //   'p.highlight => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > p.mark-up:fresh'
+            //   "p[style-name='highlight'] => h3.heading-side:fresh",
+            //   'p.highlight => h3.heading-side:fresh',
+            'p.highlight => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > span.mark-up:fresh',
+            'comment-reference => sup',
+            "p[style-name='표준'] => h4.heading-side:fresh",
+            //   'p.highlight => h3.heading-side:fresh',
+            //   "p[style-name='제목 2'] => h3:fresh",
+            //   "p[style-name='heading3'] => h3:fresh",
+            //   'p.제목 2 => h3:fresh'
+            //   "p[style-name='제목 1'] => h1.heading-one:fresh",
+            //   'p.Heading2 => h2:fresh',
+            //   'p.Heading3 => h3:fresh',
+            'p.levelone => ol.level-one > li.level-one-item:fresh',
+            'p.leveltwo => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item:fresh'
+            //   'p.highlight => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > p.mark-up:fresh'
 
-          //   'p.levelthree => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item:fresh',
-          //   'p.levelfour => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item > ol.level-four > li.level-four-item:fresh',
-          //   'p.levelfive => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item > ol.level-four > li.level-four-item > ol.level-five > li.level-five-item:fresh',
-          //   'p.levelsix => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item > ol.level-four > li.level-four-item > ol.level-five > li.level-five-item > ol.level-six > li.level-six-item:fresh',
-          //   'p.levelseven => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item > ol.level-four > li.level-four-item > ol.level-five > li.level-five-item > ol.level-six > li.level-six-item > ol.level-seven > li.level-seven-item:fresh'
-        ],
-        // includeDefaultStyleMap: false,
-        ignoreEmptyParagraphs: false
+            //   'p.levelthree => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item:fresh',
+            //   'p.levelfour => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item > ol.level-four > li.level-four-item:fresh',
+            //   'p.levelfive => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item > ol.level-four > li.level-four-item > ol.level-five > li.level-five-item:fresh',
+            //   'p.levelsix => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item > ol.level-four > li.level-four-item > ol.level-five > li.level-five-item > ol.level-six > li.level-six-item:fresh',
+            //   'p.levelseven => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item > ol.level-four > li.level-four-item > ol.level-five > li.level-five-item > ol.level-six > li.level-six-item > ol.level-seven > li.level-seven-item:fresh'
+          ],
+          // includeDefaultStyleMap: false,
+          ignoreEmptyParagraphs: false
+        }
+      } else if (selectedItem === '리걸인사이트') {
+        console.log('리걸인사이트')
+        options = {
+          // styleMap: ["h1[style-name='제목 1'] => h1:fresh", "p[style-name='제목 2'] => h3.title:fresh", "p[style-name='표준'] => h4:fresh", "p[style-name='list'] => ol > li > p:fresh"],
+          styleMap: [
+            // "p[style-name='체결일'] => h6.title:fresh",
+            "p[style-name='체결일'] => span.date:fresh",
+            "p[style-name='목적'] => span.purpose:fresh",
+            "p[style-name='당사자1'] => span.party1:fresh",
+            "p[style-name='당사자2'] => span.party2:fresh",
+            "p[style-name='서문'] => p.opening:fresh",
+
+            "p[style-name='제목1'] => h6.title:fresh",
+            "p[style-name='제목 2'] => h3.title:fresh",
+            "p[style-name='표준'] => h4:fresh",
+            "p[style-name='list'] => ol > li > p:fresh"
+          ],
+
+          // includeDefaultStyleMap: false,
+          ignoreEmptyParagraphs: false
+        }
       }
+
       mammoth.convertToHtml({ arrayBuffer: arrayBuffer }, options).then(function (resultObject) {
         // let res = str.replace(/blue/g, "red");
         const regex = /<p><\/p>/gi
-        const htmlString = resultObject.value.replaceAll(regex, '<br />')
+        // const htmlString = resultObject.value.replaceAll(regex, '<br />')
+        const htmlString = resultObject.value.replaceAll(regex, '')
+
         console.log('resultObject', resultObject)
         console.log('resultObject.value', resultObject.value)
         console.log('resultObject.value regex', htmlString)
@@ -559,7 +613,7 @@ export default function Upload() {
     }
     divs = divs.reverse()
     // console.log('divs html', divs)
-
+    let lastTag
     let list = []
     let table = []
     let row = []
@@ -568,7 +622,8 @@ export default function Upload() {
       let doc = new DOMParser().parseFromString(divs[i], 'text/xml')
       let text = doc.firstChild.textContent
       let tagName = doc.firstChild.tagName
-
+      let className = doc.firstChild.className
+      console.log('className', className && className)
       if (i + 1 < divs.length) {
         nextDoc = new DOMParser().parseFromString(divs[i + 1], 'text/xml')
         nextText = nextDoc.firstChild.textContent
@@ -593,6 +648,85 @@ export default function Upload() {
           //   console.log('list in ol', list)
           //   console.log('list in ol reversed', [...list].reverse())
           list = []
+        } else if (tagName === 'span') {
+          // 계약서에서 뺄 본문은 span으로 넣었고 데이터는 넣기 위해서 setMetaData 해주고
+          // 데이터 post 이전에 이 값을 업로드하는 데이터에 넣어 준다.
+          console.log('span 안에 들어옴', tagName, className)
+          if (className === 'party1') {
+            setMetaData((prev) => ({ ...prev, ['partyA']: text }))
+            // setMetaData({ ...metaData, partyA: text })
+          } else if (className === 'party2') {
+            setMetaData((prev) => ({ ...prev, ['partyB']: text }))
+            // setMetaData({ ...metaData, partyB: text })
+          } else if (className === 'purpose') {
+            setMetaData((prev) => ({ ...prev, ['purpose']: text }))
+            // setMetaData({ ...metaData, purpose: text })
+          } else {
+            addedItems.push({
+              idx: '',
+              tag: tagName,
+              type: className,
+              text: text
+            })
+          }
+          // addedItems.push({
+          //   idx: '',
+          //   tag: tagName,
+          //   type: className,
+          //   text: text
+          // })
+        } else if (tagName === 'h2') {
+          if (selectedItem === '리걸인사이트') {
+            const cleanedText = text.substring(text.indexOf('[') + 1, text.lastIndexOf(']'))
+            addedItems.push({
+              idx: '',
+              tag: tagName,
+              text: cleanedText
+            })
+          } else {
+            addedItems.push({
+              idx: '',
+              tag: tagName,
+              text: text
+            })
+          }
+        } else {
+          if (nextTagName === 'td') {
+            row.push({
+              tag: tagName,
+              text: text
+            })
+          } else if (nextTagName === 'tr') {
+            table.push([...row].reverse())
+            row = []
+          } else if (tagName === 'table') {
+            // addedItems.push({
+            //   idx: '',
+            //   tag: tagName,
+            //   text: [...table].reverse()
+            // })
+            table = []
+          } else if (!noTags.includes(tagName)) {
+            // h1, h2, span 등등
+            console.log('tagName', tagName)
+
+            addedItems.push({
+              idx: '',
+              tag: tagName,
+              text: text
+            })
+
+            if (selectedItem === '리걸인사이트' && className === 'opening') {
+              // h3는 서문이기 때문에 앞에 띄워쓰기 하나 추가
+              addedItems.push({
+                idx: 0,
+                tag: 'br',
+                _id: String(Number(Math.floor(Math.random() * 10000000000))),
+                html: '<br/>'
+              })
+            }
+          }
+          console.log('table', table)
         }
         //   else if (tagName === 'ol') {
         //     addedItems.push({
@@ -604,43 +738,22 @@ export default function Upload() {
         //     console.log('list in ol reversed', [...list].reverse())
         //     list = []
         //   }
-        else {
-          if (nextTagName === 'td') {
-            row.push({
-              tag: tagName,
-              text: text
-            })
-          } else if (nextTagName === 'tr') {
-            table.push([...row].reverse())
-            row = []
-          } else if (tagName === 'table') {
-            addedItems.push({
-              idx: '',
-              tag: tagName,
-              text: [...table].reverse()
-            })
-            table = []
-          } else if (!noTags.includes(tagName)) {
-            addedItems.push({
-              idx: '',
-              tag: tagName,
-              text: text
-            })
-          }
-        }
 
         /*       console.log('type: ' + tagName + ' text: ' + text.trim())
          */
       } else {
-        if (tagName === 'br') {
+        if (tagName === 'br' && tagName !== nextTagName) {
           //   console.log('doc html', doc)
           // 이부분은 지울지
+
           addedItems.push({
             idx: '',
             tag: tagName
           })
         }
       }
+      // lastTag = tagName
+      // console.log('tagName / nextTagName', tagName, nextTagName)
     }
     console.log('addedItems!', addedItems.reverse())
     // let randomId = String(Number(Math.floor(Math.random() * 10000000000)))
@@ -729,6 +842,8 @@ export default function Upload() {
         <div className="mx-auto grid h-full w-[1440px] grid-cols-5 pt-16">
           <aside className="col-span-1 grid h-full">
             <div className="flex h-full flex-col px-4">
+              <Dropdown selectedItem={selectedItem} setSelectedItem={setSelectedItem} />
+
               <div className="flex">
                 {/* <button
                   className="h-12 w-12 rounded-sm border border-gray-300 bg-white hover:bg-gray-100"
@@ -797,6 +912,20 @@ export default function Upload() {
                   </div>
                 </>
               )}
+              {/* <div className="bg-whtie w-full rounded-lg shadow">
+                <div className="flex cursor-pointer items-center justify-between p-4" onClick={toggleDropdown}>
+                  {selectedItem ? items.find((item) => item.id == selectedItem).label : 'Select your destination'}
+                  <i className={`fa fa-chevron-right text-sm text-[#91A5BE] ${isOpen && 'block'}`}></i>
+                </div>
+                <div className={`hidden border-t border-[#E5E8EC] p-1 ${isOpen && 'open'}`}>
+                  {items.map((item) => (
+                    <div className="p-2 hover:cursor-pointer" onClick={(e) => handleItemClick(e.target.id)} id={item.id}>
+                      <span className={`text-[#91A5BE] opacity-0 ${item.id == selectedItem && 'opacity-100'}`}>• </span>
+                      {item.label}
+                    </div>
+                  ))}
+                </div>
+              </div> */}
               {toggleDropzone === true ? (
                 <div className="drop-zone-wrapper">
                   <div className="flex flex-col gap-x-8">
@@ -1269,3 +1398,44 @@ let dummyUser = [
   h-[calc(100vh-68px)]
   bg-[#F7F9FD]
 */
+const data = [
+  { id: '엘지', label: '엘지' },
+  { id: '리걸인사이트', label: '리걸인사이트' }
+]
+
+const Dropdown = ({ selectedItem, setSelectedItem }) => {
+  const [isOpen, setOpen] = useState(false)
+  const [items, setItem] = useState(data)
+
+  const toggleDropdown = () => {
+    console.log('clicked')
+    setOpen(!isOpen)
+  }
+
+  const handleItemClick = (id) => {
+    selectedItem == id ? setSelectedItem(null) : setSelectedItem(id)
+    console.log('id', id)
+    setOpen(!isOpen)
+  }
+
+  return (
+    <div className="mb-4 w-full rounded-lg bg-white text-sm font-semibold shadow">
+      <div className="flex cursor-pointer items-center justify-between px-4 py-3" onClick={(e) => toggleDropdown()}>
+        {selectedItem ? items.find((item) => item.id == selectedItem).label : '계약서 타입 선택'}
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#91A5BE" className={`h-4 w-4 duration-150 ${isOpen === true && 'rotate-90'}`}>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+
+        {/* <i className={`fa fa-chevron-right text-sm text-[#91A5BE] ${isOpen === true && 'block'}`}></i> */}
+      </div>
+      <div className={`border-t border-[#E5E8EC] ${isOpen !== true && 'hidden'}`}>
+        {items.map((item) => (
+          <div className="p-2 hover:cursor-pointer hover:bg-gray-200" onClick={(e) => handleItemClick(e.target.id)} id={item.id}>
+            <span className={`text-fuchsia-500 opacity-0 ${item.id == selectedItem && 'opacity-100'}`}>• </span>
+            {item.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
