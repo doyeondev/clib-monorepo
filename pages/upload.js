@@ -1422,15 +1422,15 @@ const Dropdown = ({ selectedItem, setSelectedItem }) => {
     <div className="mb-4 w-full rounded-lg bg-white text-sm font-semibold shadow">
       <div className="flex cursor-pointer items-center justify-between px-4 py-3" onClick={(e) => toggleDropdown()}>
         {selectedItem ? items.find((item) => item.id == selectedItem).label : '계약서 타입 선택'}
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#91A5BE" className={`h-4 w-4 duration-150 ${isOpen === true && 'rotate-90'}`}>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="#91A5BE" className={`h-4 w-4 duration-150 ${isOpen === true && 'rotate-90'}`}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
 
         {/* <i className={`fa fa-chevron-right text-sm text-[#91A5BE] ${isOpen === true && 'block'}`}></i> */}
       </div>
       <div className={`border-t border-[#E5E8EC] ${isOpen !== true && 'hidden'}`}>
-        {items.map((item) => (
-          <div className="p-2 hover:cursor-pointer hover:bg-gray-200" onClick={(e) => handleItemClick(e.target.id)} id={item.id}>
+        {items.map((item, index) => (
+          <div key={index} className="p-2 hover:cursor-pointer hover:bg-gray-200" onClick={(e) => handleItemClick(e.target.id)} id={item.id}>
             <span className={`text-fuchsia-500 opacity-0 ${item.id == selectedItem && 'opacity-100'}`}>• </span>
             {item.label}
           </div>
