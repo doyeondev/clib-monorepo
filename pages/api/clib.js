@@ -29,3 +29,23 @@ export async function getContractItem(query) {
 
   return detail
 }
+
+export async function getClibDataset(query1, query2) {
+  console.log('[Clib] getClibDataset queries : ', query1, query2)
+
+  if (query1 && query2) {
+    const apiUrlEndpoint = `https://conan.ai/_functions/clibDataset/${query1}/${query2}`
+    const response = await fetch(apiUrlEndpoint)
+    const res = await response.json()
+    const detail = await res.items
+
+    return detail
+  } else if (query1 && !query2) {
+    const apiUrlEndpoint = `https://conan.ai/_functions/clibDataset/${query1}`
+    const response = await fetch(apiUrlEndpoint)
+    const res = await response.json()
+    const detail = await res.items
+
+    return detail
+  }
+}

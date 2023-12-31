@@ -10,9 +10,6 @@ input.picker[type='date'] {
   @apply text-center text-lg font-bold;
 }
 
-.level-two-item {
-  @apply list-inside list-decimal;
-}
 .input[type='text'] {
   -webkit-ime-mode: active;
   -moz-ime-mode: active;
@@ -91,6 +88,46 @@ input.picker[type='date']::-webkit-calendar-picker-indicator {
   @apply list-inside list-decimal;
 }
 
+.level-one-list {
+  @apply pl-[0.9rem];
+  /* @apply pl-[35px]; */
+}
+
+.level-one-item {
+  @apply list-outside list-decimal;
+}
+
+.level-two-list {
+  @apply list-outside pl-[1.1rem];
+}
+.level-two-item {
+  /* list-style-type: hangul; */
+  @apply list-[hangul];
+}
+
+.next {
+  /* list-style-type: hangul; */
+  @apply mt-4 w-full text-center;
+}
+
+.closing {
+  /* list-style-type: hangul; */
+  @apply mt-4 w-full text-justify;
+}
+
+.date {
+  /* list-style-type: hangul; */
+  @apply w-full py-4 text-center;
+}
+
+/* .level-two-item {
+  @apply list-inside list-decimal;
+} */
+/* 
+.preview-doc .list-two-item {
+  @apply list-inside list-decimal;
+} */
+
 .red {
   @apply text-red-600;
 }
@@ -101,14 +138,6 @@ input.picker[type='date']::-webkit-calendar-picker-indicator {
 
 .purple {
   @apply text-purple-600;
-}
-
-.preview-doc h2 {
-  @apply font-semibold underline;
-}
-
-.preview-doc li {
-  @apply list-inside list-decimal;
 }
 
 .thumb {
@@ -439,4 +468,35 @@ input:focus-within ~ label {
 .loading-screen .dot:nth-child(5) {
   background-color: #cf9fff;
   /* Purple */
+}
+
+#hideWrapper {
+  overflow: hidden;
+  position: relative;
+}
+#hideMe {
+  -webkit-animation: cssAnimation 5s forwards;
+  animation: cssAnimation 5s forwards;
+}
+@keyframes cssAnimation {
+  0% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@-webkit-keyframes cssAnimation {
+  0% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }

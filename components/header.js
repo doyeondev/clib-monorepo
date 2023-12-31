@@ -43,20 +43,23 @@ export default function Nav() {
           <div className="ml-auto flex h-full w-fit space-x-4">
             <Link className="flex cursor-pointer items-center" href="/search">
               <div className="three-d mx-auto flex w-[120px] items-center justify-center gap-x-2 py-1.5">
-                {/* <Image alt="문서 업로드" src="/icon/upload.svg" width={0} height={0} sizes="100vw" className="pointer-events-none h-4 w-4" /> */}
-                <p className="text-[13px] text-white">테스트 페이지</p>
-              </div>
-            </Link>
-            <Link target="_blank" className="flex cursor-pointer items-center" href="https://www.lawinsider.com">
-              <div className="three-d mx-auto flex w-[120px] items-center justify-center gap-x-2 py-1.5">
-                <Image alt="로인사이더" src="/icon/lawinsider.svg" width={0} height={0} sizes="100vw" className="pointer-events-none h-4 w-4" />
-                <p className="text-[13px] text-white">Law Insider</p>
+                {/* <Image alt="문서 업로드" src="/icon/pen.svg" width={0} height={0} sizes="100vw" className="pointer-events-none h-4 w-4" /> */}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#eeeeee" data-slot="icon" className="pointer-events-none h-4 w-4">
+                  <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
+                </svg>
+                <p className="text-[13px] text-white">조항 검색</p>
               </div>
             </Link>
             <Link className="flex cursor-pointer items-center" href="/upload">
               <div className="three-d mx-auto flex w-[120px] items-center justify-center gap-x-2 py-1.5">
                 <Image alt="문서 업로드" src="/icon/upload.svg" width={0} height={0} sizes="100vw" className="pointer-events-none h-4 w-4" />
                 <p className="text-[13px] text-white">문서 업로드</p>
+              </div>
+            </Link>
+            <Link target="_blank" className="flex cursor-pointer items-center" href="https://www.lawinsider.com">
+              <div className="three-d mx-auto flex w-[120px] items-center justify-center gap-x-2 py-1.5">
+                <Image alt="로인사이더" src="/icon/lawinsider.svg" width={0} height={0} sizes="100vw" className="pointer-events-none h-4 w-4" />
+                <p className="text-[13px] text-white">Law Insider</p>
               </div>
             </Link>
             {/* <Link className="flex cursor-pointer items-center " href="/upload">

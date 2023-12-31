@@ -13,6 +13,8 @@ import { search } from 'hangul-js'
 import { sample, sample2, sample3, sample4 } from 'utils/dlData'
 
 import { insert_contractData } from '/pages/api/clib/post'
+import { cleanAssetArray } from 'components/module/asset.js'
+
 import { set } from 'lodash'
 
 // const filteredQuestionData = questionData.filter(x => x.value && x.value.length > 0)
@@ -25,9 +27,9 @@ let DATA_NEW = {
   clauseArray: [],
   contentArray: [],
   industry: '',
-  language: '국문',
+  language: '',
   source: '',
-  creator: '김도연'
+  creator: ''
   // contentArray: {
   //     questionGroup_array: questionGroupData,
   //   },
@@ -46,14 +48,15 @@ export default function Upload() {
   //   selectedItem == id ? setSelectedItem(null) : setSelectedItem(id)
   // }
 
-  const [selectedItem, setSelectedItem] = useState(null)
+  const [selectedItem, setSelectedItem] = useState('리걸인사이트')
   const [input, setInput] = useState({
-    source: '',
+    source: '리걸인사이트',
     industry: '',
-    language: '',
-    creator: ''
+    language: '국문',
+    creator: '김도연'
   })
   const [metaData, setMetaData] = useState({ purpose: '', partyA: '', partyB: '' })
+  const [appendix, setAppendix] = useState([])
   const [disabled, setDisabled] = useState(false)
 
   const [currentMemoIdx, setCurrentMemoIdx] = useState(0) // 선택된 메모의 인덱스. 디폴트는 첫번째 메모로 지정함.
@@ -82,6 +85,16 @@ export default function Upload() {
 
   const [newData, setNewData] = useState({})
 
+  const [contractAsset, setContractAsset] = useState({})
+  const [clauseAsset, setClauseAsset] = useState({})
+
+  useEffect(() => {
+    async function getPageData() {
+      setToggleDropzone(true)
+    }
+    getPageData()
+  }, [])
+
   useEffect(() => {
     // console.log('signupState', signupState)
   }, [currentMemoIdx, memoData, currentMemo, filteredMemoData, currentMember, signupState])
@@ -108,6 +121,10 @@ export default function Upload() {
     // console.log('memoData', memoData)
   }, [memoData])
 
+  useEffect(() => {
+    console.log('appendix', appendix)
+  }, [appendix])
+
   const onInputChange = (e) => {
     const { name, value } = e.target
     setInput((prev) => ({
@@ -115,16 +132,7 @@ export default function Upload() {
       [name]: value
     }))
   }
-  const onSubmit = () => {
-    // console.log('들어옴')
-    // console.log(input)
-    // setDisabled(true)
-    let DATA_TO_SAVE = { ...newData, ...{ source: input.source, industry: input.industry, creator: input.creator, language: input.language } }
-    console.log('DATA_TO_SAVE', DATA_TO_SAVE)
-    insert_contractData(DATA_TO_SAVE)
-    // let loginInfo = { email: input.userEmail, password: input.password }
-    // loginAccount(loginInfo)
-  }
+
   useEffect(() => {
     // setDataHolder(memoData)
     if (!contentArray.length > 0) return
@@ -139,7 +147,7 @@ export default function Upload() {
     // const purpose = contentArray.filter((x) => x.tag && x.tag === 'h4')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h4')[0].text : ''
     // const partyA = contentArray.filter((x) => x.tag && x.tag === 'h5')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h5')[0].text : ''
     // const partyB = contentArray.filter((x) => x.tag && x.tag === 'h6')[0] ? contentArray.filter((x) => x.tag && x.tag === 'h6')[0].text : ''
-    DATA_NEW = { ...DATA_NEW, ...{ title: contractTitle, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray } }
+    DATA_NEW = { ...DATA_NEW, ...{ title: contractTitle, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray, appendix: appendix.length > 0 ? appendix : null } }
     console.log('DATA_NEW', DATA_NEW)
     // setNewData({ ...newData, ...{ title: title, partyA: partyA, partyB: partyB, purpose: purpose, clauseArray: articles, contentArray: groupedArray } })
     setNewData(DATA_NEW)
@@ -150,14 +158,31 @@ export default function Upload() {
     // console.log('갑 : ', partyA)
     // console.log('을 : ', partyB)
     // console.log('조항제목 : ', articles)
-  }, [contentArray, groupedArray, metaData])
+  }, [contentArray, groupedArray, metaData, appendix])
 
   useEffect(() => {
     // setDataHolder(memoData)
     // if (!newData.length > 0) return
     console.log('[useEffect] newData', newData)
     console.log('[useEffect] newData clauseArray', newData.clauseArray)
+    const refinedData = cleanAssetArray(newData)
+    console.log('refinedData', refinedData)
+    // console.log('refinedData', refinedData)
+    setContractAsset(refinedData)
   }, [newData])
+
+  useEffect(() => {
+    console.log('contractAsset', contractAsset)
+  }, [contractAsset])
+
+  const onSubmit = () => {
+    // setDisabled(true)
+    let DATA_TO_SAVE = { ...contractAsset, ...{ source: input.source, industry: input.industry, creator: input.creator, language: input.language } }
+    console.log('DATA_TO_SAVE', DATA_TO_SAVE)
+    insert_contractData(DATA_TO_SAVE)
+    // let loginInfo = { email: input.userEmail, password: input.password }
+    // loginAccount(loginInfo)
+  }
 
   let inputElement
 
@@ -375,21 +400,66 @@ export default function Upload() {
       //   make html
       if (clauseArray[i].tag === 'br') {
         if (clauseArray[i + 1]?.tag !== 'br') {
+          // clauseArray[i].html = '<br/>' // <br/>이 연속해서 나오는 않는 경우에만 넣어줌 (테이블 때문에)
           clauseArray[i].html = '<br/>' // <br/>이 연속해서 나오는 않는 경우에만 넣어줌 (테이블 때문에)
         } else {
           clauseArray[i].html = ''
         }
-      } else if (clauseArray[i].tag === 'ol' || clauseArray[i].tag === 'ul') {
+      }
+      // 리스트 html 렌더링에 중요한 부분...
+      else if (clauseArray[i].tag === 'ol' || clauseArray[i].tag === 'ul') {
         console.log('inside list!')
-        let subHtml = ''
+        let listHtml = ''
+        let sublistHtml = ''
         for (let k = 0; k < clauseArray[i].text.length; k++) {
           //   clauseArray[i].text[k].text = `<${clauseArray[i].text[k].tag} id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[k].text}</${clauseArray[i].text[k].tag}>`
-          subHtml = subHtml.concat('', `<${clauseArray[i].text[k].tag} id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[k].text}</${clauseArray[i].text[k].tag}>`)
+          if (clauseArray[i].text[k].subText.length > 0) {
+            for (let x = 0; x < clauseArray[i].text[k].subText.length; x++) {
+              sublistHtml = sublistHtml.concat(
+                '',
+                `<${clauseArray[i].text[k].subText[x].tag} name='level-two-item' class='level-two-item' id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[k].subText[x].text}</${
+                  clauseArray[i].text[k].subText[x].tag
+                }>`
+              )
+              console.log('sublistHtml', sublistHtml)
+            }
+            sublistHtml = `<ol name='level-two-list' class='level-two-list list-[upper-roman]'>${sublistHtml}</ol>`
+            // listHtml = listHtml.concat(`<${clauseArray[i].text[k].tag} id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[k].text}</${clauseArray[i].text[k].tag}>`, sublistHtml)
+            listHtml = listHtml.concat(
+              '',
+              `<${clauseArray[i].text[k].tag} name='level-one-item' class='level-one-item' id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[k].text}${sublistHtml}</${clauseArray[i].text[k].tag}>`
+            )
+            sublistHtml = ''
+            // listHtml = listHtml.concat(sublistHtml, `<${clauseArray[i].text[x].tag} id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[x].text}</${clauseArray[i].text[x].tag}>`)
+          } else {
+            listHtml = listHtml.concat(
+              '',
+              `<${clauseArray[i].text[k].tag} name='level-one-item' class='level-one-item' id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[k].text}</${clauseArray[i].text[k].tag}>`
+            )
+          }
         }
-        console.log('subHtml', subHtml)
+        // for (let x = 0; x < clauseArray[i].text.length; x++) {
+        //   if (!clauseArray[i].text[x].subText.length > 0) {
+        //     listHtml = listHtml.concat('', `<${clauseArray[i].text[x].tag} id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[x].text}</${clauseArray[i].text[x].tag}>`)
+        //   } else {
+        //     for (let y = 0; y < clauseArray[i].text[x].subText.length; y++) {
+        // sublistHtml = sublistHtml.concat('', `<${clauseArray[i].text[x].subText[y].tag} id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[x].subText[y].text}</${clauseArray[i].text[x].subText[y].tag}>`)
+        //     }
+        //     sublistHtml = `<ol>${sublistHtml}</ol>`
+        // listHtml = listHtml.concat(sublistHtml, `<${clauseArray[i].text[x].tag} id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[x].text}</${clauseArray[i].text[x].tag}>`)
+        //   }
+        //   //   clauseArray[i].text[k].text = `<${clauseArray[i].text[k].tag} id=${String(Number(Math.floor(Math.random() * 10000000000)))}>${clauseArray[i].text[k].text}</${clauseArray[i].text[k].tag}>`
+        // }
+        // console.log('listHtml', listHtml)
+        // console.log('sublistHtml', listsublistHtmlHtml)
 
-        clauseArray[i].html = `<${clauseArray[i].tag} id=${clauseArray[i]._id}>${subHtml}</${clauseArray[i].tag}>`
-      } else {
+        clauseArray[i].html = `<${clauseArray[i].tag} name='level-one-list' class='level-one-list' id=${clauseArray[i]._id}>${listHtml}</${clauseArray[i].tag}>`
+      }
+      // else if (clauseArray[i].tag === 'span') {
+      //   console.log('span!', clauseArray[i])
+      //   clauseArray[i].html = `<${clauseArray[i].tag}>${clauseArray[i].text}</${clauseArray[i].tag}>`
+      // }
+      else {
         clauseArray[i].html = `<${clauseArray[i].tag}>${clauseArray[i].text}</${clauseArray[i].tag}>`
       }
     }
@@ -501,7 +571,6 @@ export default function Upload() {
     let options
     reader.onloadend = function (event) {
       var arrayBuffer = reader.result
-      // debugger
       if (selectedItem === '엘지') {
         console.log('엘지')
         options = {
@@ -509,34 +578,40 @@ export default function Upload() {
           styleMap: [
             //   "p[style-name='heading1'] => h1.title:fresh",
             "p[style-name='TITLE'] => h1.title:fresh",
-            // "p[style-name='제목 1'] => h1.title:fresh",
-            // "p[style-name='제목 2'] => h2:fresh",
+            "p[style-name='제목1'] => h11.title:fresh",
 
             "p[style-name='제1조'] => h2.title:fresh",
-            "p[style-name='목적'] => h4.title:fresh",
-            "p[style-name='당사자1'] => h5.title:fresh",
-            "p[style-name='당사자2'] => h6.title:fresh",
+            "p[style-name='제1.1조'] => ol.level-one > li.one:fresh",
+            // "p[style-name='제1.1조'] => ol.level-one:fresh",
 
-            //   "p[style-name='제1.1조'] => h3.title:fresh",
-            "p[style-name='제1.1조'] => ol.level-one > li.level-one-item:fresh",
+            "p[style-name='(가)'] => ol.level-one > li.two:fresh",
+            // "p[style-name='(가)'] => ol.level-one > ol.level-two > li.two:fresh",
 
-            "p[style-name='(가)'] => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item:fresh",
+            // "p[style-name='(가)'] => ol.level-one > ol.level-two > li.level-two-item:fresh",
 
-            //   "p[style-name='highlight'] => h3.heading-side:fresh",
-            //   'p.highlight => h3.heading-side:fresh',
+            "p[style-name='CONTENTS'] => p.contents:fresh",
+
+            "p[style-name='체결일'] => span.date:fresh",
+            "p[style-name='목적'] => span.purpose:fresh",
+            "p[style-name='당사자1'] => span.party1:fresh",
+            "p[style-name='당사자2'] => span.party2:fresh",
+            "p[style-name='서문'] => p.opening:fresh",
+            "p[style-name='다음'] => span.next:fresh",
+            "p[style-name='끝문장'] => span.closing:fresh",
+            "p[style-name='첨부1'] => span.annex1:fresh",
+            "p[style-name='첨부2'] => span.annex2:fresh",
+            "p[style-name='첨부3'] => span.annex3:fresh",
+            "p[style-name='첨부4'] => span.annex4:fresh",
+            "p[style-name='첨부5'] => span.annex5:fresh",
+            "p[style-name='첨부6'] => span.annex6:fresh",
+
             'p.highlight => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > span.mark-up:fresh',
             'comment-reference => sup',
-            "p[style-name='표준'] => h4.heading-side:fresh",
-            //   'p.highlight => h3.heading-side:fresh',
-            //   "p[style-name='제목 2'] => h3:fresh",
-            //   "p[style-name='heading3'] => h3:fresh",
-            //   'p.제목 2 => h3:fresh'
-            //   "p[style-name='제목 1'] => h1.heading-one:fresh",
-            //   'p.Heading2 => h2:fresh',
-            //   'p.Heading3 => h3:fresh',
-            'p.levelone => ol.level-one > li.level-one-item:fresh',
-            'p.leveltwo => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item:fresh'
-            //   'p.highlight => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > p.mark-up:fresh'
+            "p[style-name='표준'] => h4.heading-side:fresh"
+
+            // 'p.levelone => ol.level-one > li.level-one-item:fresh',
+            // 'p.leveltwo => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item:fresh',
+            // 'p.levelthree => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item  > ol.level-three > li.level-three-item:fresh'
 
             //   'p.levelthree => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item:fresh',
             //   'p.levelfour => ol.level-one > li.level-one-item > ol.level-two > li.level-two-item > ol.level-three > li.level-three-item > ol.level-four > li.level-four-item:fresh',
@@ -553,11 +628,18 @@ export default function Upload() {
           // styleMap: ["h1[style-name='제목 1'] => h1:fresh", "p[style-name='제목 2'] => h3.title:fresh", "p[style-name='표준'] => h4:fresh", "p[style-name='list'] => ol > li > p:fresh"],
           styleMap: [
             // "p[style-name='체결일'] => h6.title:fresh",
-            "p[style-name='체결일'] => span.date:fresh",
             "p[style-name='목적'] => span.purpose:fresh",
             "p[style-name='당사자1'] => span.party1:fresh",
             "p[style-name='당사자2'] => span.party2:fresh",
-            "p[style-name='서문'] => p.opening:fresh",
+            // "p[style-name='서문'] => p.opening:fresh",
+            "p[style-name='끝문장'] => span.closing:fresh",
+            "p[style-name='체결일'] => span.date:fresh",
+            "p[style-name='첨부1'] => span.annex1:fresh",
+            "p[style-name='첨부2'] => span.annex2:fresh",
+            "p[style-name='첨부3'] => span.annex3:fresh",
+            "p[style-name='첨부4'] => span.annex4:fresh",
+            "p[style-name='첨부5'] => span.annex5:fresh",
+            "p[style-name='첨부6'] => span.annex6:fresh",
 
             "p[style-name='제목1'] => h6.title:fresh",
             "p[style-name='제목 2'] => h3.title:fresh",
@@ -615,8 +697,11 @@ export default function Upload() {
     // console.log('divs html', divs)
     let lastTag
     let list = []
+    let subList = []
     let table = []
     let row = []
+    let annex = []
+
     for (let i = 0; i < divs.length; i++) {
       let nextDoc, nextText, nextTagName
       let doc = new DOMParser().parseFromString(divs[i], 'text/xml')
@@ -634,10 +719,21 @@ export default function Upload() {
       // if (hastext && !noTags.includes(tagName) && addedItems.indexOf(text.trim()) == -1) {
       if (hastext && addedItems.indexOf(text.trim()) == -1) {
         if (tagName === 'li') {
-          list.push({
-            tag: tagName,
-            text: text
-          })
+          if (className === 'two') {
+            subList.push({
+              tag: tagName,
+              depth: className,
+              text: text
+            })
+          } else if (className === 'one') {
+            list.push({
+              tag: tagName,
+              depth: className,
+              text: text,
+              subText: [...subList].reverse()
+            })
+            subList = []
+          }
           //   console.log('list in li', list)
         } else if (tagName === 'ol') {
           addedItems.push({
@@ -661,6 +757,9 @@ export default function Upload() {
           } else if (className === 'purpose') {
             setMetaData((prev) => ({ ...prev, ['purpose']: text }))
             // setMetaData({ ...metaData, purpose: text })
+          } else if (className.includes('annex')) {
+            annex.push(text)
+            console.log('annex', annex)
           } else {
             addedItems.push({
               idx: '',
@@ -755,6 +854,8 @@ export default function Upload() {
       // lastTag = tagName
       // console.log('tagName / nextTagName', tagName, nextTagName)
     }
+    setAppendix([...appendix, ...annex.reverse()]) // 배열에 추가
+
     console.log('addedItems!', addedItems.reverse())
     // let randomId = String(Number(Math.floor(Math.random() * 10000000000)))
 
@@ -833,7 +934,7 @@ export default function Upload() {
   return (
     <Layout>
       <Head>
-        <title>클립 | 계약 업로드</title>
+        <title>클립 | 문서업로드</title>
         <meta name="description" content="클립 계약서 업로드 페이지" />
         <meta property="og:title" content="클립 계약서 업로드 페이지" />
         <link rel="icon" href="/favicon.ico" />
@@ -1183,11 +1284,21 @@ export default function Upload() {
                   ) : (
                     <>
                       {finalData.map((data, i) => {
-                        return (
-                          // let htmlSample = new DOMParser().parseFromString(sample4, 'text/html')
-
-                          <div key={i} style={{ color: 'black' }} className="" dangerouslySetInnerHTML={{ __html: data.html }}></div>
-                        )
+                        // console.log('data', data)
+                        if (data.tag === 'h2') {
+                          return (
+                            <h2 className="mt-4 font-semibold underline">
+                              제{data.idx}조 {data.text}
+                            </h2>
+                          )
+                        } else if (data.tag === 'span') {
+                          return <p className={`${data.type}`}>{data.text}</p>
+                        } else {
+                          return (
+                            // let htmlSample = new DOMParser().parseFromString(sample4, 'text/html')
+                            <div key={i} style={{ color: 'black' }} className="text-justify" dangerouslySetInnerHTML={{ __html: data.html }}></div>
+                          )
+                        }
                       })}
                     </>
                   )}

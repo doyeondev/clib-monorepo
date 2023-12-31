@@ -9,22 +9,21 @@ import { Spinner } from '/components/clib/Spinner.js'
 import { getRegExp } from 'korean-regexp'
 import _ from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
-import { SessionContext } from '/pages/_app'
 
 import SidePanel from '/components/clib/Sidepanel'
 
-const fetcher = () => fetch('https://conan.ai/_functions/clibClauseAsset').then((response) => response.json())
+const fetcher = () => fetch('https://conan.ai/_functions/clibContractList').then((response) => response.json())
 const ArticleContext = createContext()
-const AssetContext = createContext()
-const ClauseContext = createContext()
 
 const Search = () => {
   const { data } = useSWR('search', fetcher)
+
   if (data) console.log('data', data)
-  let { contractAsset } = useContext(SessionContext)
 
   useEffect(() => {
     async function getPageData() {
+      // localStorage.theme = 'light'
+      //   location.assign('/')
       if (sessionStorage.getItem('item_key')) sessionStorage.removeItem('item_key') // remove contract key session
     }
     getPageData()
@@ -38,25 +37,12 @@ const Search = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {/* {data ? <MainLayout contractList={data.items} /> : <Spinner />} */}
-      {data ? (
-        <AssetContext.Provider value={{ data }}>
-          <MainLayout contractList={data.items} />
-        </AssetContext.Provider>
-      ) : (
-        <Spinner />
-      )}
+      {data ? <MainLayout contractList={data.items} /> : <Spinner />}
     </Layout>
   )
 }
 
 const MainLayout = ({ contractList }) => {
-  let { data } = useContext(AssetContext)
-  let { items: clauseAsset } = data
-  console.log('clauseAsset', clauseAsset)
-  // const [clauseList, setClauseList] = useState(clauseAsset ? clauseAsset : [])
-  const [clauseList, setClauseList] = useState([])
-
   const [searchType, setSearchType] = useState('contract')
   const [currentData, setCurrentData] = useState([])
 
@@ -85,19 +71,57 @@ const MainLayout = ({ contractList }) => {
 
   useEffect(() => {
     setCurrentIndex(0)
-    console.log('from useEffect', clauseAsset)
-    setClauseList(clauseAsset ? clauseAsset : [])
-    // setArticleData(shuffle(finalData))
+    let index = 0
+    for (let i = 0; i < contractList.length; i++) {
+      for (let j = 0; j < contractList[i].contentArray.length; j++) {
+        // console.log('contractList[i].contentArray[j]', contractList[i].contentArray[j])
+        let arr = contractList[i].contentArray[j]
+
+        if (j !== contractList[i].contentArray.length - 1) {
+          match = arr.filter((x) => x.tag.includes('h2') || !x.tag.includes('br')) // 1. "h2" 태그를 갖는 배열 필터링
+        } else {
+          match = arr.slice(0, 2) // 2. 맨 마지막 조항의 불필요한 정보 삭제
+          // console.log('arr.slice(0, 2)', arr.slice(0, 2))
+        }
+
+        // 3. "h1" (계약서 제목) 태그를 갖는 배열 Delete
+        let titleLength = match.filter((x) => x.tag.includes('h1')).length // h1은 빼준다
+
+        if (match.length > 0 && titleLength === 0) {
+          // console.log('match', match)
+          fullData = {
+            article: match[0],
+            paragraph: match.slice(1),
+            _id: contractList[i]._id,
+            title: contractList[i].title,
+            industry: contractList[i].industry,
+            source: contractList[i]?.source,
+            partyA: contractList[i].partyA,
+            partyB: contractList[i].partyB,
+            purpose: contractList[i].purpose,
+            idx: index
+          }
+          index = index + 1
+          cleanedClauseArray.push(fullData)
+        }
+      }
+    }
+    let finalData = cleanedClauseArray
+    cleanedClauseArray = []
+    console.log('finalData', finalData)
+    // console.log('cleanedClauseArray', cleanedClauseArray)
+
+    setArticleData(shuffle(finalData))
     setSearchType('article')
     // setClibData(finalData)
     let chunkData
     if (searchType === 'contract') chunkData = _.chunk(contractList, 5)
     else chunkData = _.chunk(finalData, 5)
     setContractGroup(_.chunk(contractList, 5))
-    setArticleGroup(_.chunk(clauseAsset, 5))
-    setCurrentData(_.chunk(clauseAsset, 5))
-    setMaxIndex(_.chunk(clauseAsset, 5).length - 1)
-    console.log('_.chunk(clauseAsset, 5)', _.chunk(clauseAsset, 5))
+    setArticleGroup(_.chunk(finalData, 5))
+    setCurrentData(_.chunk(contractList, 5))
+    setMaxIndex(_.chunk(contractList, 5).length - 1)
+    console.log('_.chunk(contractList, 5)', _.chunk(contractList, 5))
   }, [])
   function shuffle(array) {
     return array.sort(() => Math.random() - 0.5)
@@ -145,7 +169,7 @@ const MainLayout = ({ contractList }) => {
     )
   } else if (searchType === 'article') {
     return (
-      <ArticleContext.Provider value={{ articleData, clauseList }}>
+      <ArticleContext.Provider value={{ articleData }}>
         {
           <div className="bg-white">
             <SearchWrapper contractList={contractList} searchType={searchType} setSearchType={setSearchType} />
@@ -199,12 +223,8 @@ const ContractList = ({ contractList }) => {
 
 const ArticleList = ({ contractList, articleGroup, currentIndex, setCurrentIndex, maxIndex }) => {
   // console.log('articleGroup props', articleGroup)
-  let { clauseList, articleData } = useContext(ArticleContext)
-  let { contractAsset } = useContext(SessionContext)
-
-  console.log('contractAsset', contractAsset)
-
-  console.log('clauseList', clauseList)
+  let { articleData } = useContext(ArticleContext)
+  console.log('articleData', articleData)
 
   const [showSidebar, setShowSidebar] = useState(false)
   const [clickedItem, setClickedItem] = useState([])
@@ -235,13 +255,13 @@ const ArticleList = ({ contractList, articleGroup, currentIndex, setCurrentIndex
   }
   // onClickHandler={onClickHandler} currentIndex={currentIndex} maxIndex={maxIndex}
 
-  function setSidebarData(item) {
+  function setSidebarData(item, parent) {
     setClickedItem(item)
     console.log('item', item)
-    console.log('contractList', contractList)
-    console.log('contractAsset!', contractAsset)
-    let match = contractAsset?.filter((x) => x._id === item.contract_asset)
-    console.log('match', match)
+    console.log('parent', parent)
+
+    let match = contractList.filter((x) => x._id === parent._id)
+    console.log('match', match[0])
     setData(match[0])
 
     setShowSidebar(!showSidebar)
@@ -258,72 +278,64 @@ const ArticleList = ({ contractList, articleGroup, currentIndex, setCurrentIndex
   return (
     <main className="mx-auto w-[920px] px-[10vw] py-6">
       {/* {articleGroup[currentIndex].map((item, index) => { */}
-      {clauseList.map((item, index) => {
-        console.log('item', item)
-        let CONTENT_HTML = ''
-        for (let i = 0; i < item.content_array.length; i++) {
-          console.log('contentList[i].html', item.content_array[i])
-          CONTENT_HTML = CONTENT_HTML.concat(item.content_array[i].html)
-        }
-        return (
-          <div key={index} className="mt-4 flex w-full border-b pb-4">
-            <div className="h-auto w-5 flex-none grow border-l-4 border-gray-500"></div>
-            <div className="flex w-full grow flex-col text-sm">
-              <div className="flex flex-col">
-                {/* <Link onClick={(e) => setClickedItem(item.article)} href={{ pathname: `/clib/search/${item._id}`, query: item.article }} className="group flex items-center justify-between pb-4">
+      {articleData?.map((item, index) => {
+        if (item.article.idx > 3) {
+          // console.log('item', item.idx)
+          return (
+            <div key={index} className="mt-4 flex w-full border-b pb-4">
+              <div className="h-auto w-5 flex-none grow border-l-4 border-gray-500"></div>
+              <div className="flex w-full grow flex-col text-sm">
+                <div className="flex flex-col">
+                  {/* <Link onClick={(e) => setClickedItem(item.article)} href={{ pathname: `/clib/search/${item._id}`, query: item.article }} className="group flex items-center justify-between pb-4">
                     <div className="mr-1 grow text-base font-bold tracking-wide text-black group-hover:text-gray-700 group-hover:underline">{item.article.text}</div>
                     <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">
                       {item.title} ({item.source})
                     </div>
                   </Link> */}
-                <div onClick={(e) => setSidebarData(item)} className="group flex cursor-pointer items-center justify-between pb-4">
-                  <div className="mr-1 grow text-base font-bold tracking-wide text-black group-hover:text-gray-700 group-hover:underline">{item.clause_title}</div>
-                  <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">
-                    {item.title} ({item.source})
+                  <div onClick={(e) => setSidebarData(item.article, item)} className="group flex cursor-pointer items-center justify-between pb-4">
+                    <div className="mr-1 grow text-base font-bold tracking-wide text-black group-hover:text-gray-700 group-hover:underline">{item.article.text}</div>
+                    <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">
+                      {item.title} ({item.source})
+                    </div>
+                  </div>
+                  <div className="flex flex-col text-[13px] leading-relaxed">
+                    <p className="w-fit font-medium text-gray-500">본문 내용</p>
+                    {item.paragraph.map((elem) => {
+                      if (elem.tag === 'p') {
+                        return (
+                          <p key={elem._id} className="line-clamp-5 text-gray-900">
+                            {elem.text}
+                          </p>
+                        )
+                      } else if (elem.tag === 'ol') {
+                        return <div key={elem._id} dangerouslySetInnerHTML={{ __html: elem.html }} className="preview-doc line-clamp-5 text-gray-900"></div>
+                      }
+                    })}
                   </div>
                 </div>
-                <div className="flex flex-col text-[13px] leading-relaxed">
-                  <p className="w-fit font-medium text-gray-500">본문 내용</p>
-
-                  {/* <div key={item._id} dangerouslySetInnerHTML={{ __html: item.content_html }} className="preview-doc line-clamp-5 text-gray-900"></div> */}
-                  <div key={item._id} dangerouslySetInnerHTML={{ __html: CONTENT_HTML }} className="text-gray-900"></div>
-                  {/* <div key={item._id} dangerouslySetInnerHTML={{ __html: item.content_html }} className="text-gray-900"></div> */}
-
-                  {/* {item.paragraph.map((elem) => {
-                    if (elem.tag === 'p') {
-                      return (
-                        <p key={elem._id} className="line-clamp-5 text-gray-900">
-                          {elem.text}
-                        </p>
-                      )
-                    } else if (elem.tag === 'ol') {
-                      return <div key={elem._id} dangerouslySetInnerHTML={{ __html: elem.html }} className="preview-doc line-clamp-5 text-gray-900"></div>
-                    }
-                  })} */}
-                </div>
-              </div>
-              <div className="my-4 w-full border-b-2 border-dotted"></div>
-              <div className="flex justify-between text-[13px] ">
-                {/* <div className="flex flex-col text-[13px]">
+                <div className="my-4 w-full border-b-2 border-dotted"></div>
+                <div className="flex justify-between text-[13px] ">
+                  {/* <div className="flex flex-col text-[13px]">
                     <p className="text-gray-500">계약서</p>
                     <p className="text-gray-800">{item.title}</p>
                   </div> */}
-                <div className="flex flex-col">
-                  <p className="text-gray-500">계약 당사자(갑)</p>
-                  <p className="text-gray-800">{item.partyA}</p>
-                </div>
-                <div className="flex flex-col">
-                  <p className="text-gray-500">계약 당사자(을)</p>
-                  <p className="text-gray-800">{item.partyB}</p>
-                </div>
-                <div className="flex flex-col">
-                  <p className="text-gray-500">산업</p>
-                  <p className="text-gray-800">{item.industry}</p>
+                  <div className="flex flex-col">
+                    <p className="text-gray-500">계약 당사자(갑)</p>
+                    <p className="text-gray-800">{item.partyA}</p>
+                  </div>
+                  <div className="flex flex-col">
+                    <p className="text-gray-500">계약 당사자(을)</p>
+                    <p className="text-gray-800">{item.partyB}</p>
+                  </div>
+                  <div className="flex flex-col">
+                    <p className="text-gray-500">산업</p>
+                    <p className="text-gray-800">{item.industry}</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )
+          )
+        }
         // console.log('item', item)
       })}
       {showSidebar === true && <SidePanel clickedItem={clickedItem} data={data} showSidebar={showSidebar} setShowSidebar={setShowSidebar} />}
@@ -365,7 +377,6 @@ const SearchWrapper = ({ contractList, searchType, setSearchType }) => {
 const SearchInput = ({ contractList, searchType, setSearchType }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResult, setSearchResult] = useState([])
-  let { clauseList, articleData } = useContext(ArticleContext)
 
   useEffect(() => {
     let filteredList
@@ -396,7 +407,7 @@ const SearchInput = ({ contractList, searchType, setSearchType }) => {
   }
   // 계약서 제목만 검색함
   function runSearch(term) {
-    let match = clauseList.filter((x) => x.title.match(getRegExp(term)) !== null)
+    let match = contractList.filter((x) => x.title.match(getRegExp(term)) !== null)
     console.log('match', match)
     return match
   }
@@ -404,23 +415,20 @@ const SearchInput = ({ contractList, searchType, setSearchType }) => {
     // let clauses = 여기 부분!!
     let mergedClauseArray = []
     let matchArray = []
-    let match = clauseList.filter((x) => x.clause_title.match(getRegExp(term)) !== null)
-    console.log('match', match)
-    // for (let i = 0; i < clauseList.length; i++) {
-    //   console.log('clauseList[i].clauseArray', clauseList[i])
-    //   let match = clauseList.filter((x) => x.clause_title.match(getRegExp(term)) !== null)
-    //   console.log('match', match)
-    //   if (match.length > 0) {
-    //     for (let j = 0; j < match.length; j++) {
-    //       match[j].source = contractList[i]
-    //     }
-    //     matchArray.push(match)
-    //   }
-    // }
+    for (let i = 0; i < contractList.length; i++) {
+      console.log('contractList[i].clauseArray', contractList[i])
+      let match = contractList[i].clauseArray.filter((x) => x.text.match(getRegExp(term)) !== null)
+      console.log('match', match)
+      if (match.length > 0) {
+        for (let j = 0; j < match.length; j++) {
+          match[j].source = contractList[i]
+        }
+        matchArray.push(match)
+      }
+    }
     // console.log('mergedClauseArray', mergedClauseArray)
     console.log('matchArray', _.flatten(matchArray))
-    return match
-    // return _.flatten(matchArray)
+    return _.flatten(matchArray)
     // let match = contractList.filter((x) => x.text.match(getRegExp(term)) !== null)
   }
 
@@ -521,13 +529,13 @@ const SearchResult = ({ searchResult, searchTerm, searchType }) => {
             )
           } else if (searchType === 'article') {
             console.log('resultObj', resultObj)
-            matchingTerm = resultObj.clause_title.replace(searchTerm, `<span class="font-bold text-blue-800">${searchTerm}</span>`)
-            additionalInfo = `<p>${resultObj.contract_title} (${resultObj.source})</p>`
+            matchingTerm = resultObj.text.replace(searchTerm, `<span class="font-bold text-blue-800">${searchTerm}</span>`)
+            additionalInfo = `<p>${resultObj.source.title} (${resultObj.source.source})</p>`
             return (
               <Link
                 key={index}
                 href={{
-                  pathname: `/search/${resultObj.contract_asset}`,
+                  pathname: `/search/${resultObj.source._id}`,
                   query: resultObj // the data
                 }}
                 className="flex cursor-pointer items-center justify-between border-b bg-white px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50/50"

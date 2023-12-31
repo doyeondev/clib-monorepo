@@ -13,10 +13,14 @@ export default function SidePanel({ data, clickedItem, showSidebar, setShowSideb
   const [selectedClauses, setSelectedClauses] = useState([]) // 선택된 메모의 인덱스. 디폴트는 첫번째 메모로 지정함.
   const [showPreview, setShowPreview] = useState(false)
   const [fileLoadCompleted, setFileLoadCompleted] = useState(false)
+  console.log('data', data)
+  console.log('clickedItem', clickedItem)
 
   useEffect(() => {
-    if (clickedItem && clickedItem.length > 0) {
-      const updatedClauses = [...selectedClauses, parseInt(clickedItem.idx)]
+    if (clickedItem) {
+      const updatedClauses = [...selectedClauses, clickedItem.cIdx]
+      console.log('updatedClauses', updatedClauses)
+
       setSelectedClauses(updatedClauses)
       console.log('clickedItem', clickedItem)
       console.log('data', data)
@@ -86,7 +90,7 @@ export default function SidePanel({ data, clickedItem, showSidebar, setShowSideb
             <main className="mx-auto w-full">
               <div className="flex w-full flex-col border-b border-dotted border-gray-300 px-8 py-6 text-sm">
                 <div className="flex items-center justify-between py-2">
-                  <div className="text-lg font-bold">{data.contractName}</div>
+                  <div className="text-lg font-bold">{data.title}</div>
                   <div className="ml-4 rounded bg-gray-200/50 px-1 py-0.5 text-xs text-gray-600 shadow-sm">{data.clientName}</div>
                 </div>
                 <div className="flex justify-between py-2">
@@ -111,7 +115,7 @@ export default function SidePanel({ data, clickedItem, showSidebar, setShowSideb
               </div>
             </main>
             <div className="mx-auto w-full py-6">
-              <div className="flex flex-wrap place-content-center gap-4 px-8">
+              <div className="flex flex-wrap place-content-center gap-2 px-8">
                 {data['clauseArray']?.map((clause) => {
                   // console.log('clause.idx', clause.idx, selectedClauses)
                   // console.log('selectedClauses.includes(clause.idx)', selectedClauses.includes(clause.idx))
@@ -122,7 +126,7 @@ export default function SidePanel({ data, clickedItem, showSidebar, setShowSideb
                       }}
                       id={clause.idx}
                       key={clause.idx}
-                      className={`cursor-pointer rounded border border-slate-600 px-3 py-1 text-xs font-medium ${selectedClauses.includes(clause.idx) === true ? 'bg-gray-800 text-white shadow-sm' : 'bg-white'}`}
+                      className={`cursor-pointer rounded border border-slate-600 px-2 py-1 text-xs font-medium ${selectedClauses.includes(clause.idx) === true ? 'bg-gray-800 text-white shadow-sm' : 'bg-white'}`}
                     >
                       제{clause.idx}조 {clause.text}
                     </div>
@@ -140,6 +144,7 @@ export default function SidePanel({ data, clickedItem, showSidebar, setShowSideb
                   const contentList = clause.filter((x) => x.tag !== 'h2')
                   let CONTENT_HTML = ''
                   for (let i = 0; i < contentList.length; i++) {
+                    console.log('contentList[i].html', contentList[i])
                     CONTENT_HTML = CONTENT_HTML.concat(contentList[i].html)
                   }
                   console.log('article', article)

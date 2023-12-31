@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Head from 'next/head'
 import Layout from '/components/layout'
+import Image from 'next/image'
 
 import useSWR from 'swr'
 import React, { useEffect, useState, Fragment, createContext, useContext } from 'react'
@@ -11,10 +12,14 @@ import _ from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
 
 import SidePanel from '/components/clib/Sidepanel'
-import { getContractList, getCategoryList, getContractItem } from '/pages/api/clib'
+import { getContractList, getCategoryList, getContractItem, getClibDataset } from '/pages/api/clib'
 import { NoBackpackSharp } from '@mui/icons-material'
 
-import { SessionContext } from './_app'
+import { SessionContext } from '/pages/_app'
+
+// 추가
+// import tippy from 'tippy.js'
+// import 'tippy.js/dist/tippy.css' // optional for styling
 
 // const fetcher = (url) => fetch('https://conan.ai/_functions/clibContractList').then((response) => response.json())
 const fetcher = (url) => fetch(url).then((response) => response.json())
@@ -82,8 +87,12 @@ const Search = () => {
 
       if (loaded !== true) {
         // const contracts = await getContractList()
+        // tippy('#cli/p', {
+        //   content: '북마크 추가'
+        // })
+
         const categories = await getCategoryList()
-        // console.log('contracts', contracts)
+        // console.log('clipped', clipped)
         console.log('categories[0].assets(contracts)', categories[0].assets)
         console.log('categories', categories)
         // setContractList(contracts)
@@ -324,6 +333,8 @@ const MainLayout = ({ contractList }) => {
 }
 
 const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, data, setData, setShowSidebar, showSidebar }) => {
+  const { clippedContract, onClipClick } = useContext(SessionContext)
+
   const [clickedItem, setClickedItem] = useState([])
 
   let { categoryList, currentCategory, updateCategory } = useContext(CategoryContext)
@@ -375,7 +386,7 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
           {categoryList.map((elem, index) => {
             // console.log('elem', elem)
             return (
-              <div onClick={(e) => updateCategory(e)} id={elem._id} className={`mb-2 mr-2 cursor-pointer rounded px-2 py-1 shadow-sm ${elem._id === currentCategory._id ? 'bg-gray-900' : 'bg-gray-100 hover:bg-gray-200'}`} key={index}>
+              <div onClick={(e) => updateCategory(e)} id={elem._id} className={`mb-2.5 mr-1.5 cursor-pointer rounded px-2 py-1 shadow-sm ${elem._id === currentCategory._id ? 'bg-gray-900' : 'bg-gray-100 hover:bg-gray-200'}`} key={index}>
                 <p className={`pointer-events-none text-[13px] ${elem._id === currentCategory._id ? 'text-white' : 'text-gray-500'}`}>
                   {elem.title} ({elem.assets.length})
                 </p>
@@ -383,6 +394,29 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
             )
           })}
         </div>
+        {/* <div className={`flex mt-2 ${questionType.includes('right') && 'items-center gap-x-7 gap-y-2.5 flex-wrap'} ${questionType.includes('down') && 'flex-col space-y-2'}`}>
+        {dataList.options.map((option, index) => {
+          return (
+            <>
+              <label className="cursor-pointer text-sm font-normal items-center text-gray-600 dark:text-gray-300" key={uuidv4()}>
+                <input
+                  name={dataList.binding_key}
+                  id={dataList._id}
+                //   _id={dataList.id}
+                //   onChange={onChange}
+                //   onClick={option.type && option.type.includes('etc') ? etcClick : function (event) {}} // 기타 항목 추가할 때만 사용
+                  type="checkbox"
+                  value={option.value}
+                  index={index}
+                  checked={option.checked}
+                  className={`mb-0.5 cursor-pointer text-[#584FEB] bg-gray-100 border-gray-300 focus:ring-purple-400 dark:focus:ring-[#584FEB] dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 w-4 h-4 rounded`}
+                />
+                &nbsp;&nbsp;{option.label}
+              </label>
+            </>
+          )
+        })}
+      </div> */}
         {contractList.map((item, index) => {
           // console.log('item', item)
           return (
@@ -391,28 +425,55 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
               {/* <div className="h-auto w-5 flex-none grow border-l-4 border-gray-600"></div> */}
               <div className="flex w-full grow flex-col space-y-4 border-gray-300 text-sm">
                 {/* <Link href={`/clib/search/${item._id}`} className="group flex flex-col"> */}
-                <div onClick={(e) => setSidebarData(item.article, item)} className="group flex cursor-pointer flex-col">
+                {/* <div className="group flex cursor-pointer flex-col"> */}
+                <div className="flex flex-col">
                   <div className="mb-4 flex items-center justify-between">
-                    <div className="flex">
-                      <div className="grow text-base font-bold tracking-wide text-gray-700 hover:text-gray-800 group-hover:underline">{item.title}</div>
-                      <div className="ml-4 flex items-center space-x-2 text-xs">
-                        {item.categories.length > 0 && (
-                          <>
-                            {/* <p className="text-gray-900">관련분야</p> */}
-                            {item.categories.map((category) => {
-                              // console.log('item', item)
-                              return (
-                                <div key={category._id} className="rounded bg-fuchsia-100 px-1.5 py-0.5 text-gray-700">
-                                  {category.title}
-                                </div>
-                              )
-                            })}
-                          </>
-                        )}
+                    <div onClick={(e) => setSidebarData(item.article, item)} className="group flex w-full cursor-pointer items-center justify-between">
+                      <div className="flex">
+                        <div className="grow text-base font-bold tracking-wide text-gray-700 group-hover:text-gray-800 group-hover:underline">{item.title}</div>
+                        <div className="ml-4 flex items-center space-x-2 text-xs">
+                          {item.categories.length > 0 && (
+                            <>
+                              {/* <p className="text-gray-900">관련분야</p> */}
+                              {item.categories.map((category) => {
+                                // console.log('item', item)
+                                return (
+                                  <div key={category._id} className="rounded bg-fuchsia-100 px-1.5 py-0.5 text-gray-700">
+                                    {category.title}
+                                  </div>
+                                )
+                              })}
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    {/* <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">{item.source}</div> */}
-                    <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">출처: {item.source}</div>
+                    <button id={item._id} name="contract" onClick={(e) => onClipClick(e)} className="transform cursor-pointer outline-none transition-transform active:scale-75">
+                      {!clippedContract.includes(item._id) ? (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="pointer-events-none h-5 w-5 fill-gray-400  hover:fill-[#BB22E2]">
+                            <path
+                              fillRule="evenodd"
+                              d="M15.621 4.379a3 3 0 0 0-4.242 0l-7 7a3 3 0 0 0 4.241 4.243h.001l.497-.5a.75.75 0 0 1 1.064 1.057l-.498.501-.002.002a4.5 4.5 0 0 1-6.364-6.364l7-7a4.5 4.5 0 0 1 6.368 6.36l-3.455 3.553A2.625 2.625 0 1 1 9.52 9.52l3.45-3.451a.75.75 0 1 1 1.061 1.06l-3.45 3.451a1.125 1.125 0 0 0 1.587 1.595l3.454-3.553a3 3 0 0 0 0-4.242Z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <div id="hideWrapper" className="absolute -right-20 -top-0.5 h-full w-full px-2 py-0.5">
+                            <div id="hideMe" className="rounded bg-gray-200 ">
+                              efefef
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="pointer-events-none h-5 w-5 fill-[#BB22E2]">
+                          <path
+                            fillRule="evenodd"
+                            d="M15.621 4.379a3 3 0 0 0-4.242 0l-7 7a3 3 0 0 0 4.241 4.243h.001l.497-.5a.75.75 0 0 1 1.064 1.057l-.498.501-.002.002a4.5 4.5 0 0 1-6.364-6.364l7-7a4.5 4.5 0 0 1 6.368 6.36l-3.455 3.553A2.625 2.625 0 1 1 9.52 9.52l3.45-3.451a.75.75 0 1 1 1.061 1.06l-3.45 3.451a1.125 1.125 0 0 0 1.587 1.595l3.454-3.553a3 3 0 0 0 0-4.242Z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                   <div className="flex justify-between text-[13px]">
                     <div className="flex flex-col">
