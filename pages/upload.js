@@ -1287,12 +1287,16 @@ export default function Upload() {
                         // console.log('data', data)
                         if (data.tag === 'h2') {
                           return (
-                            <h2 className="mt-4 font-semibold underline">
+                            <h2 key={i} className="mt-4 font-semibold underline">
                               제{data.idx}조 {data.text}
                             </h2>
                           )
                         } else if (data.tag === 'span') {
-                          return <p className={`${data.type}`}>{data.text}</p>
+                          return (
+                            <p key={i} className={`${data.type}`}>
+                              {data.text}
+                            </p>
+                          )
                         } else {
                           return (
                             // let htmlSample = new DOMParser().parseFromString(sample4, 'text/html')

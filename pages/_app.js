@@ -125,7 +125,7 @@ export default function App({ Component, pageProps }) {
                 <div className="mx-auto flex flex-col space-y-2 text-center text-[13px] font-semibold text-gray-600">
                   <p className="">안녕하세요 클립 운영진입니다!</p>
                   <p>
-                    서비스 <span className="font-semibold">데모기능</span> 구현을 위한 리뉴얼이 진행 중입니다 (-1/1)
+                    서비스 <span className="font-semibold">데모기능</span> 구현을 위한 리뉴얼이 진행 중입니다 (-1/2)
                   </p>
                   <p>액세스 코드를 발급 받으셨던 분들은 코드 입력 후 정상 이용 가능합니다 😀</p>
                 </div>
