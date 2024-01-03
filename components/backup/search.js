@@ -286,12 +286,6 @@ const ArticleList = ({ contractList, articleGroup, currentIndex, setCurrentIndex
               <div className="h-auto w-5 flex-none grow border-l-4 border-gray-500"></div>
               <div className="flex w-full grow flex-col text-sm">
                 <div className="flex flex-col">
-                  {/* <Link onClick={(e) => setClickedItem(item.article)} href={{ pathname: `/clib/search/${item._id}`, query: item.article }} className="group flex items-center justify-between pb-4">
-                    <div className="mr-1 grow text-base font-bold tracking-wide text-black group-hover:text-gray-700 group-hover:underline">{item.article.text}</div>
-                    <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">
-                      {item.title} ({item.source})
-                    </div>
-                  </Link> */}
                   <div onClick={(e) => setSidebarData(item.article, item)} className="group flex cursor-pointer items-center justify-between pb-4">
                     <div className="mr-1 grow text-base font-bold tracking-wide text-black group-hover:text-gray-700 group-hover:underline">{item.article.text}</div>
                     <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">

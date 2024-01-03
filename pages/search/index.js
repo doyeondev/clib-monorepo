@@ -21,7 +21,7 @@ const ClauseContext = createContext()
 const Search = () => {
   const { data } = useSWR('search', fetcher)
   if (data) console.log('data', data)
-  let { contractAsset } = useContext(SessionContext)
+  let { contractAsset, userApproved, authUser } = useContext(SessionContext)
 
   useEffect(() => {
     async function getPageData() {
@@ -39,12 +39,30 @@ const Search = () => {
       </Head>
 
       {/* {data ? <MainLayout contractList={data.items} /> : <Spinner />} */}
-      {data ? (
-        <AssetContext.Provider value={{ data }}>
-          <MainLayout contractList={data.items} />
-        </AssetContext.Provider>
+      {userApproved !== true ? (
+        <main className="center justify flex min-h-[calc(100vh-120px)] flex-col items-center bg-white">
+          <div className="my-auto flex w-fit">
+            <input
+              type="password"
+              name="password"
+              id="password"
+              placeholder="Type Access Code"
+              onChange={(e) => authUser(e)}
+              className="block w-[320px] rounded-md border-gray-400 bg-gray-50 p-2.5 py-1.5 text-center text-sm text-gray-700 placeholder:text-slate-500 hover:border-purple-400 focus:border-none focus:placeholder-transparent focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500"
+              required=""
+            />
+          </div>
+        </main>
       ) : (
-        <Spinner />
+        <>
+          {data ? (
+            <AssetContext.Provider value={{ data }}>
+              <MainLayout contractList={data.items} />
+            </AssetContext.Provider>
+          ) : (
+            <Spinner />
+          )}
+        </>
       )}
     </Layout>
   )

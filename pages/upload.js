@@ -14,6 +14,7 @@ import { sample, sample2, sample3, sample4 } from 'utils/dlData'
 
 import { insert_contractData } from '/pages/api/clib/post'
 import { cleanAssetArray } from 'components/module/asset.js'
+import { SessionContext } from '/pages/_app'
 
 import { set } from 'lodash'
 
@@ -38,6 +39,8 @@ let DATA_NEW = {
 const now = new Date()
 
 export default function Upload() {
+  const { userApproved, authUser } = useContext(SessionContext)
+
   // const [isOpen, setOpen] = useState(false)
   // const [items, setItem] = useState(data)
   // const [selectedItem, setSelectedItem] = useState(null)
@@ -939,14 +942,29 @@ export default function Upload() {
         <meta property="og:title" content="클립 계약서 업로드 페이지" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={`flex h-[calc(100vh-68px)] bg-[#F7F9FD] px-8`}>
-        <div className="mx-auto grid h-full w-[1440px] grid-cols-5 pt-16">
-          <aside className="col-span-1 grid h-full">
-            <div className="flex h-full flex-col px-4">
-              <Dropdown selectedItem={selectedItem} setSelectedItem={setSelectedItem} />
+      {userApproved !== true ? (
+        <main className="center justify flex min-h-[calc(100vh-120px)] flex-col items-center bg-white">
+          <div className="my-auto flex w-fit">
+            <input
+              type="password"
+              name="password"
+              id="password"
+              placeholder="Type Access Code"
+              onChange={(e) => authUser(e)}
+              className="block w-[320px] rounded-md border-gray-400 bg-gray-50 p-2.5 py-1.5 text-center text-sm text-gray-700 placeholder:text-slate-500 hover:border-purple-400 focus:border-none focus:placeholder-transparent focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500"
+              required=""
+            />
+          </div>
+        </main>
+      ) : (
+        <main className={`flex h-[calc(100vh-68px)] bg-[#F7F9FD] px-8`}>
+          <div className="mx-auto grid h-full w-[1440px] grid-cols-5 pt-16">
+            <aside className="col-span-1 grid h-full">
+              <div className="flex h-full flex-col px-4">
+                <Dropdown selectedItem={selectedItem} setSelectedItem={setSelectedItem} />
 
-              <div className="flex">
-                {/* <button
+                <div className="flex">
+                  {/* <button
                   className="h-12 w-12 rounded-sm border border-gray-300 bg-white hover:bg-gray-100"
                   onClick={() => {
                     const newMemoList = [...memoData]
@@ -959,61 +977,61 @@ export default function Upload() {
                     <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
                   </svg>
                 </button> */}
-                <button className="h-12 w-12 rounded-sm border border-gray-300 bg-white hover:bg-gray-100" onClick={() => setToggleDropzone(!toggleDropzone)}>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="mx-auto h-5 w-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </button>
-                <button className="h-12 w-12 rounded-sm border border-gray-300 bg-white hover:bg-gray-100" onClick={() => setToggleSearch(!toggleSearch)}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="mx-auto h-5 w-5">
-                    <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                <button
-                  className="h-12 w-12 rounded-sm border border-gray-300 bg-white hover:bg-gray-100"
-                  onClick={() => {
-                    setDeleteState(!deleteState)
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="mx-auto h-5 w-5">
-                    <path
-                      fillRule="evenodd"
-                      d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </div>
-              {toggleSearch === true && (
-                <>
-                  <div className="dark:highlight-white/5 relative mt-4 flex h-fit items-center rounded-md text-sm leading-6 text-slate-400 shadow-sm ring-1 ring-slate-900/10 hover:ring-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 ">
-                    <svg width="24" height="24" fill="none" ariaHidden="true" className="absolute ml-2 flex-none">
-                      <path d="m19 19-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
-                      <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></circle>
+                  <button className="h-12 w-12 rounded-sm border border-gray-300 bg-white hover:bg-gray-100" onClick={() => setToggleDropzone(!toggleDropzone)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="mx-auto h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <input
-                      type="text"
-                      id="searchInput"
-                      placeholder="Quick search..."
-                      value={searchInput}
-                      onChange={function (e) {
-                        setSearchInput(e.target.value)
-                      }}
-                      className="block w-full rounded-md border border-transparent bg-gray-50 p-2.5 pl-10 text-gray-900 focus:border-transparent focus:ring-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
-                    />
-                    {searchInput.length > 0 && (
-                      <svg onClick={() => setSearchInput('')} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="absolute right-3 h-5 w-5 cursor-pointer">
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                          clipRule="evenodd"
-                        />
+                  </button>
+                  <button className="h-12 w-12 rounded-sm border border-gray-300 bg-white hover:bg-gray-100" onClick={() => setToggleSearch(!toggleSearch)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="mx-auto h-5 w-5">
+                      <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  <button
+                    className="h-12 w-12 rounded-sm border border-gray-300 bg-white hover:bg-gray-100"
+                    onClick={() => {
+                      setDeleteState(!deleteState)
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="mx-auto h-5 w-5">
+                      <path
+                        fillRule="evenodd"
+                        d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                {toggleSearch === true && (
+                  <>
+                    <div className="dark:highlight-white/5 relative mt-4 flex h-fit items-center rounded-md text-sm leading-6 text-slate-400 shadow-sm ring-1 ring-slate-900/10 hover:ring-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 ">
+                      <svg width="24" height="24" fill="none" ariaHidden="true" className="absolute ml-2 flex-none">
+                        <path d="m19 19-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
+                        <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></circle>
                       </svg>
-                    )}
-                  </div>
-                </>
-              )}
-              {/* <div className="bg-whtie w-full rounded-lg shadow">
+                      <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Quick search..."
+                        value={searchInput}
+                        onChange={function (e) {
+                          setSearchInput(e.target.value)
+                        }}
+                        className="block w-full rounded-md border border-transparent bg-gray-50 p-2.5 pl-10 text-gray-900 focus:border-transparent focus:ring-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
+                      />
+                      {searchInput.length > 0 && (
+                        <svg onClick={() => setSearchInput('')} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="absolute right-3 h-5 w-5 cursor-pointer">
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </>
+                )}
+                {/* <div className="bg-whtie w-full rounded-lg shadow">
                 <div className="flex cursor-pointer items-center justify-between p-4" onClick={toggleDropdown}>
                   {selectedItem ? items.find((item) => item.id == selectedItem).label : 'Select your destination'}
                   <i className={`fa fa-chevron-right text-sm text-[#91A5BE] ${isOpen && 'block'}`}></i>
@@ -1027,169 +1045,169 @@ export default function Upload() {
                   ))}
                 </div>
               </div> */}
-              {toggleDropzone === true ? (
-                <div className="drop-zone-wrapper">
-                  <div className="flex flex-col gap-x-8">
-                    <div onClick={(e) => handleClick(e)} onDrop={(e) => handleDrop(e)} className="drop-zone">
-                      {/* <div className="drop-zone"> */}
-                      <span className="drop-zone__prompt">Drop file here or click to upload</span>
-                      <input onChange={(e) => handleChange(e)} id="fileInput" type="file" name="myFile" className="drop-zone__input" />
+                {toggleDropzone === true ? (
+                  <div className="drop-zone-wrapper">
+                    <div className="flex flex-col gap-x-8">
+                      <div onClick={(e) => handleClick(e)} onDrop={(e) => handleDrop(e)} className="drop-zone">
+                        {/* <div className="drop-zone"> */}
+                        <span className="drop-zone__prompt">Drop file here or click to upload</span>
+                        <input onChange={(e) => handleChange(e)} id="fileInput" type="file" name="myFile" className="drop-zone__input" />
+                      </div>
+                      <div className="check" id="thumbnails"></div>
                     </div>
-                    <div className="check" id="thumbnails"></div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex flex-col space-y-1 pt-4">
-                  {dataHolder.map((memo, idx) => {
-                    if (memo.deleted !== true) {
-                      return (
-                        <div
-                          className={`group flex h-fit cursor-pointer items-center justify-between rounded-md px-2 py-1 ${currentMemoIdx === memo.idx ? 'bg-fuchsia-300' : 'bg-fuchsia-50 hover:bg-fuchsia-100'}`}
-                          onClick={() => {
-                            currentMemo.content !== '' && updateMemoData() // 메모 수정사항이 있으면 updateMemoData()
-                            setCurrentMemoIdx(memo.idx) // updateMemoData() 해주고 나서 currentMemoIdx도 업데이트 ==> 현재 클릭된 메모 idx 업뎃하기 전에, 이전에 클릭된 메모 정보를 위에서 먼저 업데이트
-                            setToggleDate(false)
-                            setDeleteState(false) // 상단 삭제 버튼 원래대로 RESET
-                          }}
-                          id={memo.idx}
-                          key={memo.idx}
-                        >
-                          {/* <div className="flex w-40 flex-col py-1 pl-4 md:w-44 lg:w-52 xl:w-60"> */}
-                          <div className="flex w-full flex-col py-1 pl-4 ">
-                            {currentMemoIdx === idx && currentMemo.content !== '' ? (
-                              <p dangerouslySetInnerHTML={{ __html: currentMemo.title }} className="truncate text-sm font-semibold"></p>
-                            ) : (
-                              <p dangerouslySetInnerHTML={{ __html: memo.title }} className="truncate text-sm font-semibold"></p>
-                            )}
-                            <p className="text-xs text-gray-600">{formatDate(now, 'short')}</p>
-                          </div>
+                ) : (
+                  <div className="flex flex-col space-y-1 pt-4">
+                    {dataHolder.map((memo, idx) => {
+                      if (memo.deleted !== true) {
+                        return (
+                          <div
+                            className={`group flex h-fit cursor-pointer items-center justify-between rounded-md px-2 py-1 ${currentMemoIdx === memo.idx ? 'bg-fuchsia-300' : 'bg-fuchsia-50 hover:bg-fuchsia-100'}`}
+                            onClick={() => {
+                              currentMemo.content !== '' && updateMemoData() // 메모 수정사항이 있으면 updateMemoData()
+                              setCurrentMemoIdx(memo.idx) // updateMemoData() 해주고 나서 currentMemoIdx도 업데이트 ==> 현재 클릭된 메모 idx 업뎃하기 전에, 이전에 클릭된 메모 정보를 위에서 먼저 업데이트
+                              setToggleDate(false)
+                              setDeleteState(false) // 상단 삭제 버튼 원래대로 RESET
+                            }}
+                            id={memo.idx}
+                            key={memo.idx}
+                          >
+                            {/* <div className="flex w-40 flex-col py-1 pl-4 md:w-44 lg:w-52 xl:w-60"> */}
+                            <div className="flex w-full flex-col py-1 pl-4 ">
+                              {currentMemoIdx === idx && currentMemo.content !== '' ? (
+                                <p dangerouslySetInnerHTML={{ __html: currentMemo.title }} className="truncate text-sm font-semibold"></p>
+                              ) : (
+                                <p dangerouslySetInnerHTML={{ __html: memo.title }} className="truncate text-sm font-semibold"></p>
+                              )}
+                              <p className="text-xs text-gray-600">{formatDate(now, 'short')}</p>
+                            </div>
 
-                          {/* <div className={currentMemoIdx === idx && toggleDelete === true ? '' : 'hidden'}> */}
-                          <div onClick={() => deleteMemoItem(memo.idx)} className={`invisible rounded-md p-1.5 ${currentMemoIdx === memo.idx && deleteState === true ? '!visible bg-red-700' : 'hover:bg-gray-700 group-hover:visible'} `}>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#D9D9D9" className="pointer-events-none h-5 w-5">
-                              <path
-                                fillRule="evenodd"
-                                d="M16.5 4.478v.227a48.816 48.816 0 013.878.512.75.75 0 11-.256 1.478l-.209-.035-1.005 13.07a3 3 0 01-2.991 2.77H8.084a3 3 0 01-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 01-.256-1.478A48.567 48.567 0 017.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 013.369 0c1.603.051 2.815 1.387 2.815 2.951zm-6.136-1.452a51.196 51.196 0 013.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 00-6 0v-.113c0-.794.609-1.428 1.364-1.452zm-.355 5.945a.75.75 0 10-1.5.058l.347 9a.75.75 0 101.499-.058l-.346-9zm5.48.058a.75.75 0 10-1.498-.058l-.347 9a.75.75 0 001.5.058l.345-9z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
+                            {/* <div className={currentMemoIdx === idx && toggleDelete === true ? '' : 'hidden'}> */}
+                            <div onClick={() => deleteMemoItem(memo.idx)} className={`invisible rounded-md p-1.5 ${currentMemoIdx === memo.idx && deleteState === true ? '!visible bg-red-700' : 'hover:bg-gray-700 group-hover:visible'} `}>
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#D9D9D9" className="pointer-events-none h-5 w-5">
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.5 4.478v.227a48.816 48.816 0 013.878.512.75.75 0 11-.256 1.478l-.209-.035-1.005 13.07a3 3 0 01-2.991 2.77H8.084a3 3 0 01-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 01-.256-1.478A48.567 48.567 0 017.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 013.369 0c1.603.051 2.815 1.387 2.815 2.951zm-6.136-1.452a51.196 51.196 0 013.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 00-6 0v-.113c0-.794.609-1.428 1.364-1.452zm-.355 5.945a.75.75 0 10-1.5.058l.347 9a.75.75 0 101.499-.058l-.346-9zm5.48.058a.75.75 0 10-1.498-.058l-.347 9a.75.75 0 001.5.058l.345-9z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
                           </div>
+                        )
+                      }
+                    })}
+                  </div>
+                )}
+              </div>
+            </aside>
+            {/* 여기! */}
+            <div className="col-span-2 grid space-y-6 overflow-scroll p-8 shadow-lg">
+              {finalData.length > 0 ? (
+                <>
+                  {newData.clauseArray !== [] && (
+                    <>
+                      <div className="flex items-center text-xs font-bold">
+                        <p className=" text-slate-800">계약서 명칭</p>
+                        <p className="ml-3 font-semibold">{newData.title}</p>
+                      </div>
+                      <div className="flex items-center text-xs font-bold">
+                        <p className=" text-slate-800">계약 당사자 (갑)</p>
+                        <p className="ml-3 font-semibold">{newData.partyA}</p>
+                      </div>
+                      <div className="flex items-center text-xs font-bold">
+                        <p className=" text-slate-800">계약 당사자 (을)</p>
+                        <p className="ml-3 font-semibold">{newData.partyB}</p>
+                      </div>
+                      <div className="text-xs font-bold">
+                        <p className="text-slate-800">계약 목적과 거래 요약</p>
+                        <p className="font-semibold">{newData.purpose}</p>
+                      </div>
+                      <div className="text-xs font-bold">
+                        <p className="text-sm text-orange-600">조항목차</p>
+                        {newData.clauseArray?.map((clause, i) => {
+                          if (clause.tag === 'h2') {
+                            return (
+                              <p className="font-semibold" key={i}>
+                                {clause.text}
+                              </p>
+                            )
+                          }
+                        })}
+                      </div>
+                      <form className="space-y-8" action="#">
+                        <div>
+                          <label htmlFor="language" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                            언어
+                          </label>
+                          <input
+                            type="text"
+                            name="language"
+                            className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
+                            placeholder="영문 or 국문"
+                            value={input.language}
+                            onChange={function (event) {
+                              onInputChange(event)
+                              // setDisabled(false)
+                            }}
+                            //   onKeyDown={press}
+                            required=""
+                          />
                         </div>
-                      )
-                    }
-                  })}
-                </div>
-              )}
-            </div>
-          </aside>
-          {/* 여기! */}
-          <div className="col-span-2 grid space-y-6 overflow-scroll p-8 shadow-lg">
-            {finalData.length > 0 ? (
-              <>
-                {newData.clauseArray !== [] && (
-                  <>
-                    <div className="flex items-center text-xs font-bold">
-                      <p className=" text-slate-800">계약서 명칭</p>
-                      <p className="ml-3 font-semibold">{newData.title}</p>
-                    </div>
-                    <div className="flex items-center text-xs font-bold">
-                      <p className=" text-slate-800">계약 당사자 (갑)</p>
-                      <p className="ml-3 font-semibold">{newData.partyA}</p>
-                    </div>
-                    <div className="flex items-center text-xs font-bold">
-                      <p className=" text-slate-800">계약 당사자 (을)</p>
-                      <p className="ml-3 font-semibold">{newData.partyB}</p>
-                    </div>
-                    <div className="text-xs font-bold">
-                      <p className="text-slate-800">계약 목적과 거래 요약</p>
-                      <p className="font-semibold">{newData.purpose}</p>
-                    </div>
-                    <div className="text-xs font-bold">
-                      <p className="text-sm text-orange-600">조항목차</p>
-                      {newData.clauseArray?.map((clause, i) => {
-                        if (clause.tag === 'h2') {
-                          return (
-                            <p className="font-semibold" key={i}>
-                              {clause.text}
-                            </p>
-                          )
-                        }
-                      })}
-                    </div>
-                    <form className="space-y-8" action="#">
-                      <div>
-                        <label htmlFor="language" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                          언어
-                        </label>
-                        <input
-                          type="text"
-                          name="language"
-                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
-                          placeholder="영문 or 국문"
-                          value={input.language}
-                          onChange={function (event) {
-                            onInputChange(event)
-                            // setDisabled(false)
-                          }}
-                          //   onKeyDown={press}
-                          required=""
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="source" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                          고객사 이름
-                        </label>
-                        <input
-                          type="text"
-                          name="source"
-                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
-                          placeholder="LG화학"
-                          value={input.source}
-                          onChange={function (event) {
-                            onInputChange(event)
-                            // setDisabled(false)
-                          }}
-                          //   onKeyDown={press}
-                          required=""
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="industry" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                          산업
-                        </label>
-                        <input
-                          type="text"
-                          name="industry"
-                          placeholder="화학, 제조판매"
-                          value={input.industry}
-                          onChange={function (event) {
-                            onInputChange(event)
-                            // setDisabled(false)
-                          }}
-                          //   onKeyDown={press}
-                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
-                          required=""
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="creator" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                          업로드한 담당자
-                        </label>
-                        <input
-                          type="text"
-                          name="creator"
-                          placeholder="김도연"
-                          value={input.creator}
-                          onChange={function (event) {
-                            onInputChange(event)
-                            // setDisabled(false)
-                          }}
-                          //   onKeyDown={press}
-                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
-                          required=""
-                        />
-                      </div>
-                      {/* <div className="flex items-center justify-between">
+                        <div>
+                          <label htmlFor="source" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                            고객사 이름
+                          </label>
+                          <input
+                            type="text"
+                            name="source"
+                            className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
+                            placeholder="LG화학"
+                            value={input.source}
+                            onChange={function (event) {
+                              onInputChange(event)
+                              // setDisabled(false)
+                            }}
+                            //   onKeyDown={press}
+                            required=""
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="industry" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                            산업
+                          </label>
+                          <input
+                            type="text"
+                            name="industry"
+                            placeholder="화학, 제조판매"
+                            value={input.industry}
+                            onChange={function (event) {
+                              onInputChange(event)
+                              // setDisabled(false)
+                            }}
+                            //   onKeyDown={press}
+                            className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
+                            required=""
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="creator" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                            업로드한 담당자
+                          </label>
+                          <input
+                            type="text"
+                            name="creator"
+                            placeholder="김도연"
+                            value={input.creator}
+                            onChange={function (event) {
+                              onInputChange(event)
+                              // setDisabled(false)
+                            }}
+                            //   onKeyDown={press}
+                            className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-purple-600 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500 sm:text-sm"
+                            required=""
+                          />
+                        </div>
+                        {/* <div className="flex items-center justify-between">
                 <div className="flex items-start">
                   <div className="flex items-center h-5">
                     <input
@@ -1210,17 +1228,17 @@ export default function Upload() {
                   비밀번호를 잊으셨나요?
                 </a>
               </div> */}
-                      <button
-                        id="loginBtn"
-                        type="button"
-                        onClick={onSubmit}
-                        disabled={disabled}
-                        className="flex w-full cursor-pointer place-content-center rounded-lg bg-purple-500 py-2.5 text-sm font-medium text-white hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-300 disabled:cursor-progress disabled:bg-purple-200 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
-                      >
-                        업로드
-                      </button>
-                    </form>
-                    {/* <div className="space-y-0.5 text-xs font-bold ">
+                        <button
+                          id="loginBtn"
+                          type="button"
+                          onClick={onSubmit}
+                          disabled={disabled}
+                          className="flex w-full cursor-pointer place-content-center rounded-lg bg-purple-500 py-2.5 text-sm font-medium text-white hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-300 disabled:cursor-progress disabled:bg-purple-200 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
+                        >
+                          업로드
+                        </button>
+                      </form>
+                      {/* <div className="space-y-0.5 text-xs font-bold ">
                       <p className="text-sm text-red-600">정의된 용어</p>
                       <ol>
                         {highlightedText.map((highlight, i) => {
@@ -1262,55 +1280,55 @@ export default function Upload() {
                         })}
                       </ol>
                     </div> */}
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="preview-doc px-16 py-8 text-xs" id="result1"></div>
-              </>
-            )}
-          </div>
-          <div className="col-span-2 overflow-scroll p-8">
-            <div className="preview-doc" id="result2">
-              {contentArray !== [] && (
-                <div className="text-xs">
-                  {finalData === [] ? (
-                    <>
-                      {contentArray.map((clause, i) => {
-                        return <p key={i}>{clause.text}</p>
-                      })}
-                    </>
-                  ) : (
-                    <>
-                      {finalData.map((data, i) => {
-                        // console.log('data', data)
-                        if (data.tag === 'h2') {
-                          return (
-                            <h2 key={i} className="mt-4 font-semibold underline">
-                              제{data.idx}조 {data.text}
-                            </h2>
-                          )
-                        } else if (data.tag === 'span') {
-                          return (
-                            <p key={i} className={`${data.type}`}>
-                              {data.text}
-                            </p>
-                          )
-                        } else {
-                          return (
-                            // let htmlSample = new DOMParser().parseFromString(sample4, 'text/html')
-                            <div key={i} style={{ color: 'black' }} className="text-justify" dangerouslySetInnerHTML={{ __html: data.html }}></div>
-                          )
-                        }
-                      })}
                     </>
                   )}
-                </div>
+                </>
+              ) : (
+                <>
+                  <div className="preview-doc px-16 py-8 text-xs" id="result1"></div>
+                </>
               )}
-              <div className="flex flex-col text-sm font-bold">{selectedText.length > 0 && <div className="text-red-600">red</div>}</div>
             </div>
-            {/* {currentMember === '' ? (
+            <div className="col-span-2 overflow-scroll p-8">
+              <div className="preview-doc" id="result2">
+                {contentArray !== [] && (
+                  <div className="text-xs">
+                    {finalData === [] ? (
+                      <>
+                        {contentArray.map((clause, i) => {
+                          return <p key={i}>{clause.text}</p>
+                        })}
+                      </>
+                    ) : (
+                      <>
+                        {finalData.map((data, i) => {
+                          // console.log('data', data)
+                          if (data.tag === 'h2') {
+                            return (
+                              <h2 key={i} className="mt-4 font-semibold underline">
+                                제{data.idx}조 {data.text}
+                              </h2>
+                            )
+                          } else if (data.tag === 'span') {
+                            return (
+                              <p key={i} className={`${data.type}`}>
+                                {data.text}
+                              </p>
+                            )
+                          } else {
+                            return (
+                              // let htmlSample = new DOMParser().parseFromString(sample4, 'text/html')
+                              <div key={i} style={{ color: 'black' }} className="text-justify" dangerouslySetInnerHTML={{ __html: data.html }}></div>
+                            )
+                          }
+                        })}
+                      </>
+                    )}
+                  </div>
+                )}
+                <div className="flex flex-col text-sm font-bold">{selectedText.length > 0 && <div className="text-red-600">red</div>}</div>
+              </div>
+              {/* {currentMember === '' ? (
               <div className="flex flex-col px-4">
                 <button onClick={() => setSignupState(!signupState)} className="btn-headless mb-4 rounded-md bg-gray-100 px-2 py-3 text-sm font-bold shadow-md hover:bg-gray-200">
                   {signupState === true ? 'I already have an account' : 'I am a new user'}
@@ -1330,9 +1348,10 @@ export default function Upload() {
                 </div>
               </>
             )} */}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      )}
     </Layout>
   )
 }

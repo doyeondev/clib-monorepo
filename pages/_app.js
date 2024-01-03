@@ -7,7 +7,7 @@ import Image from 'next/image'
 // import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
 // import { ThemeProvider } from '@material-tailwind/react'
 import { ThemeProvider } from 'next-themes'
-import { getContractList, getClibDataset } from '/pages/api/clib'
+import { getContractList, getClibDataset, updateClippedData } from '/pages/api/clib'
 import useSWR from 'swr'
 
 export const SessionContext = createContext()
@@ -20,26 +20,66 @@ export default function App({ Component, pageProps }) {
   // console.log('data???', data)
 
   const [userApproved, setUserApproved] = useState(false)
+  const [demoApproved, setDemoApproved] = useState(false)
   const [contractAsset, setContractAsset] = useState([])
 
   // setMetaData((prev) => ({ ...prev, ['partyB']: text }))
   // setAppendix([...appendix, ...annex.reverse()]) // 배열에 추가
 
-  const onInputChange = (e) => {
+  const authUser = (e) => {
     if (e.target.value === 'mlt_dykim1') {
       setUserApproved(true)
       sessionStorage.setItem('auth_status', true)
     }
   }
-
+  const loginDemo = (e) => {
+    if (e.target.value === 'demo') {
+      setDemoApproved(true)
+      sessionStorage.setItem('demo_status', true)
+    }
+  }
   // 즐겨찾기 기능
 
   const [clippedContract, setClippedContract] = useState([])
   const [clippedClause, setClippedClause] = useState([])
+  const [toastState, setToastState] = useState(null)
+  const [toastDetail, setToastDetail] = useState({ type: '', action: '', id: '' })
+  const [userClippedData, setUserClippedData] = useState([])
+
+  // toastDetail, toastState toastStateHandler
+
+  const toastStateHandler = () => {
+    setToastState(true)
+    setTimeout(() => {
+      setToastState(false)
+    }, 1000)
+  }
 
   useEffect(() => {
     console.log('clippedContract', clippedContract)
+    if (toastState === true || toastState === false) {
+      let updatedClippedData = [...userClippedData]
+      console.log('updatedClippedData', updatedClippedData)
+
+      updatedClippedData[0].contract_clipped = clippedContract
+      console.log('updatedClippedData', updatedClippedData)
+
+      updateClippedData(updatedClippedData[0])
+    }
   }, [clippedContract])
+
+  useEffect(() => {
+    console.log('clippedClause', clippedClause)
+    if (toastState === true || toastState === false) {
+      let updatedClippedData = [...userClippedData]
+      console.log('updatedClippedData', updatedClippedData)
+
+      updatedClippedData[0].clause_clipped = clippedClause
+      console.log('updatedClippedData', updatedClippedData)
+
+      updateClippedData(updatedClippedData[0])
+    }
+  }, [clippedClause])
 
   const onClipClick = (e) => {
     const clipType = e.target.name
@@ -47,28 +87,30 @@ export default function App({ Component, pageProps }) {
 
     console.log('clipType: ', clipType)
     console.log('clippedItem: ', clippedItem)
-    let newData
 
     if (clipType === 'contract') {
-      newData = [...clippedContract]
-
       if (!clippedContract.includes(clippedItem)) {
+        // OOO 계약서가 클립되었습니다.
         setClippedContract((current) => [...current, clippedItem])
+        setToastDetail({ type: 'contract', action: '추가', id: clippedItem })
+        toastStateHandler()
       } else {
+        // OOO 계약서가 클립해제되었습니다.
         setClippedContract((current) => [...current.filter((x) => x !== clippedItem)])
+        setToastDetail({ type: 'contract', action: '삭제', id: clippedItem })
+        toastStateHandler()
       }
     } else if (clipType === 'clause') {
-      newData = [...clippedClause]
-
       if (!clippedClause.includes(clippedItem)) {
-        console.log('clip type 3', newData.push(clippedItem))
-        setClippedClause([...clippedClause, ...newData.push(clippedItem)])
+        // OOO 조항이 클립되었습니다.
+        setClippedClause((current) => [...current, clippedItem])
+        setToastDetail({ type: 'clause', action: '추가', id: clippedItem })
+        toastStateHandler()
       } else {
-        console.log(
-          'clip type 4',
-          clippedClause.filter((x) => x !== clippedItem)
-        )
-        setClippedClause([...clippedClause, ...clippedClause.filter((x) => x !== clippedItem)])
+        // OOO 조항이 클립해제되었습니다.
+        setClippedClause((current) => [...current.filter((x) => x !== clippedItem)])
+        setToastDetail({ type: 'clause', action: '삭제', id: clippedItem })
+        toastStateHandler()
       }
     }
   }
@@ -76,15 +118,21 @@ export default function App({ Component, pageProps }) {
   useEffect(() => {
     async function getPageData() {
       let auth_status = sessionStorage.getItem('auth_status')
-      console.log('auth_status', auth_status)
+      // console.log('auth_status', auth_status)
       if (auth_status === 'true') setUserApproved(true)
 
-      const contracts = await getContractList()
-      const user = await getClibDataset('demo_member', 'primer')
+      let demo_status = sessionStorage.getItem('demo_status')
+      // console.log('demo_status', demo_status)
+      if (demo_status === 'true') setDemoApproved(true)
 
+      const contracts = await getContractList()
+      const user_clippedData = await getClibDataset('demo_member', 'primer')
       setContractAsset(contracts)
-      if (user[0].contract_clipped) setClippedContract(user[0].contract_clipped)
-      if (user[0].clause_clipped) setClippedClause(user[0].clause_clipped)
+      if (user_clippedData[0].contract_clipped) setClippedContract(user_clippedData[0].contract_clipped)
+      // if (user_clippedData[0].clause_clipped) setClippedClause(user_clippedData[0].clause_clipped)
+      user_clippedData[0].clause_clipped ? setClippedClause(user_clippedData[0].clause_clipped) : setClippedClause([])
+
+      setUserClippedData(user_clippedData)
     }
     getPageData()
   }, [])
@@ -109,7 +157,7 @@ export default function App({ Component, pageProps }) {
           `
           }}
         />
-        {userApproved !== true ? (
+        {demoApproved !== true ? (
           <>
             <Head>
               <title>클립</title>
@@ -118,23 +166,12 @@ export default function App({ Component, pageProps }) {
             </Head>
             <main className="center justify flex h-screen flex-col items-center bg-white">
               <div className="my-auto flex w-fit flex-col space-y-10 pb-8">
-                <div className="title-font mx-auto flex space-x-1.5 font-medium text-gray-900">
-                  <Image alt="클립" src="/icon/clib-icon.svg" width={0} height={0} sizes="100vw" className="h-auto w-[30px] justify-center" />
-                  <Image alt="클립" src="/icon/clib-text-3d.svg" width={0} height={0} sizes="100vw" className="mt-[1px] h-auto w-[44px] justify-center" />
-                </div>
-                <div className="mx-auto flex flex-col space-y-2 text-center text-[13px] font-semibold text-gray-600">
-                  <p className="">안녕하세요 클립 운영진입니다!</p>
-                  <p>
-                    서비스 <span className="font-semibold">데모기능</span> 구현을 위한 리뉴얼이 진행 중입니다 (-1/2)
-                  </p>
-                  <p>액세스 코드를 발급 받으셨던 분들은 코드 입력 후 정상 이용 가능합니다 😀</p>
-                </div>
                 <input
                   type="password"
                   name="password"
                   id="password"
                   placeholder="Type Access Code"
-                  onChange={(e) => onInputChange(e)}
+                  onChange={(e) => loginDemo(e)}
                   className="mx-auto block w-[320px] rounded-md border-gray-400 bg-gray-50 p-2.5 py-1.5 text-center text-sm text-gray-700 placeholder:text-slate-500 hover:border-purple-400 focus:border-none focus:placeholder-transparent focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500"
                   required=""
                 />
@@ -142,17 +179,11 @@ export default function App({ Component, pageProps }) {
             </main>
           </>
         ) : (
-          <SessionContext.Provider value={{ userApproved, onInputChange, contractAsset, clippedContract, clippedClause, onClipClick }}>
+          <SessionContext.Provider value={{ demoApproved, setDemoApproved, userApproved, authUser, contractAsset, clippedContract, clippedClause, onClipClick, toastDetail, toastState, setToastState }}>
             <Component {...pageProps} />
           </SessionContext.Provider>
         )}
       </ThemeProvider>
     </>
   )
-
-  // return (
-  //   <>
-  //     <Component {...pageProps} />
-  //   </>
-  // )
 }

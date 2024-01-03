@@ -91,7 +91,7 @@ export default function SidePanel({ data, clickedItem, showSidebar, setShowSideb
               <div className="flex w-full flex-col border-b border-dotted border-gray-300 px-8 py-6 text-sm">
                 <div className="flex items-center justify-between py-2">
                   <div className="text-lg font-bold">{data.title}</div>
-                  <div className="ml-4 rounded bg-gray-200/50 px-1 py-0.5 text-xs text-gray-600 shadow-sm">{data.clientName}</div>
+                  {/* <div className="ml-4 rounded bg-gray-200/50 px-1 py-0.5 text-xs text-gray-600 shadow-sm">{data.clientName}</div> */}
                 </div>
                 <div className="flex justify-between py-2">
                   <div className="flex flex-col">

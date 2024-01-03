@@ -36,8 +36,6 @@ const CategoryContext = createContext()
 // const ContractContext = createContext()
 
 const Search = () => {
-  const { userApproved, onInputChange } = useContext(SessionContext)
-
   const [authModalOpen, setAuthModalOpen] = useState(false)
 
   // const { data } = useSWR('aaa', fetcher)
@@ -49,28 +47,6 @@ const Search = () => {
   const [currentCategory, setCurrentCategory] = useState([])
 
   const [loaded, setLoaded] = useState(false)
-  // const [userApproved, setUserApproved] = useState(false)
-
-  // const AppProvider = ({ contexts, children }) =>
-  //   contexts.reduce(
-  //     (prev, context) =>
-  //       React.createElement(context, {
-  //         children: prev
-  //       }),
-  //     children
-  //   )
-
-  // const { data, error } = useSWR('https://conan.ai/_functions/clibContractList', fetcher)
-  // const { categories } = useSWR('https://conan.ai/_functions/clibCategoryList', fetcher)
-
-  // console.log('contracts', contracts)
-  // console.log('categories', categories)
-
-  // if (data) console.log('data : ', data)
-  // if (categories) console.log('categories : ', categories)
-
-  // setContractList(data.items)
-
   useEffect(() => {
     async function getPageData() {
       // localStorage.theme = 'light'
@@ -110,25 +86,12 @@ const Search = () => {
     // alert(`Add ${newItem}`)
   }
 
-  useEffect(() => {
-    console.log('contractList', contractList)
-    console.log('contractList2', currentCategory)
-  }, [contractList, currentCategory])
+  // useEffect(() => {
+  //   console.log('contractList', contractList)
+  //   console.log('contractList2', currentCategory)
+  // }, [contractList, currentCategory])
 
-  // // 전역 로딩 상태
-  // if (!user) return <Spinner/>
-
-  // return <div>
-  //   <Navbar user={user} />
-  //   <Content user={user} />
-  // </div>
-
-  // const onInputChange = (e) => {
-  //   if (e.target.value === '1234') {
-  //     setUserApproved(true)
-  //     sessionStorage.setItem('auth_status', true)
-  //   }
-  // }
+  const { userApproved, authUser } = useContext(SessionContext)
 
   return (
     <Layout>
@@ -137,7 +100,7 @@ const Search = () => {
         <meta name="description" content="Clib My Asset" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {/* {userApproved !== true ? (
+      {userApproved !== true ? (
         <main className="center justify flex min-h-[calc(100vh-120px)] flex-col items-center bg-white">
           <div className="my-auto flex w-fit">
             <input
@@ -145,7 +108,7 @@ const Search = () => {
               name="password"
               id="password"
               placeholder="Type Access Code"
-              onChange={(e) => onInputChange(e)}
+              onChange={(e) => authUser(e)}
               className="block w-[320px] rounded-md border-gray-400 bg-gray-50 p-2.5 py-1.5 text-center text-sm text-gray-700 placeholder:text-slate-500 hover:border-purple-400 focus:border-none focus:placeholder-transparent focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500"
               required=""
             />
@@ -153,23 +116,9 @@ const Search = () => {
         </main>
       ) : (
         <CategoryContext.Provider value={{ assetList, categoryList, currentCategory, updateCategory }}>{contractList?.length > 0 ? <MainLayout contractList={contractList} /> : <Spinner />}</CategoryContext.Provider>
-      )} */}
-      <CategoryContext.Provider value={{ assetList, categoryList, currentCategory, updateCategory }}>{contractList?.length > 0 ? <MainLayout contractList={contractList} /> : <Spinner />}</CategoryContext.Provider>
+      )}
     </Layout>
   )
-  // } else {
-  //   return (
-  //     <Layout>
-  //       <Head>
-  //         <title>클립</title>
-  //         <meta name="description" content="Clib My Asset" />
-  //         <link rel="icon" href="/favicon.ico" />
-  //       </Head>
-  //       {/* <AppProvider contexts={[HeaderProvider, UserProvider]}> */}
-  //       {/* </AppProvider> */}
-  //     </Layout>
-  //   )
-  // }
 }
 
 // const MainLayout = ({ contractList, categoryList }) => {

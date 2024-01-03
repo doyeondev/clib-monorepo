@@ -88,6 +88,17 @@ input.picker[type='date']::-webkit-calendar-picker-indicator {
   @apply list-inside list-decimal;
 }
 
+.note p {
+  @apply text-gray-500;
+}
+
+.clause-css li {
+  @apply list-outside list-decimal;
+}
+.clause-css ol {
+  @apply pl-[1rem];
+}
+
 .level-one-list {
   @apply pl-[0.9rem];
   /* @apply pl-[35px]; */
