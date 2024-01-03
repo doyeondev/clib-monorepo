@@ -590,7 +590,7 @@ const SearchWrapper = ({ contractList, searchType, setSearchType, setData, setSh
             />
           </svg>
         )} */}
-        <h2 className="text-xl font-semibold">{searchType === 'contract' ? '어떤 계약서 양식이 필요하신가요?' : '계약서 조항을 검색하세요!'}</h2>
+        <h2 className="text-xl font-semibold">{searchType === 'contract' ? '클립이 제공하는 조항 라이브러리입니다' : '계약서 조항을 검색하세요!'}</h2>
       </aside>
       <SearchInput contractList={contractList} searchType={searchType} setSearchType={setSearchType} setData={setData} setShowSidebar={setShowSidebar} showSidebar={showSidebar} />
     </section>
@@ -699,7 +699,7 @@ const SearchInput = ({ searchType, setSearchType, setData, setShowSidebar, showS
                     id="search"
                     value={searchTerm}
                     className="block w-full rounded-lg border border-fuchsia-100 bg-fuchsia-50/30 p-2.5 ps-5 text-sm text-gray-900 hover:border-fuchsia-200 hover:bg-white focus:border-fuchsia-300 focus:bg-white focus:ring-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-purple-500 dark:focus:ring-purple-500"
-                    placeholder="계약서를 검색해보세요!"
+                    placeholder="필요한 조항을 검색해보세요!"
                     onChange={async (e) => setSearchTerm(e.target.value)}
                     required
                   />

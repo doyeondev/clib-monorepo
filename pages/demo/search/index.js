@@ -334,7 +334,7 @@ const ArticleList = ({ contractList, articleGroup, currentIndex, setCurrentIndex
 const SearchWrapper = ({ contractList, searchType, setSearchType }) => {
   return (
     <section className="mt-6 flex flex-col px-[10vw] py-6">
-      <aside className="mx-auto flex w-fit items-center gap-x-2 text-2xl">
+      <aside className="mx-auto flex w-fit items-center gap-x-2 text-xl">
         {searchType === 'contract' ? (
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FF6F53" className="mr-1 h-6 w-6">
             <path
@@ -353,7 +353,6 @@ const SearchWrapper = ({ contractList, searchType, setSearchType }) => {
             />
           </svg>
         )}
-
         <h2 className="font-semibold">{searchType === 'contract' ? '어떤 계약서 양식이 필요하신가요?' : '계약서 조항을 검색하세요!'}</h2>
       </aside>
       <SearchInput contractList={contractList} searchType={searchType} setSearchType={setSearchType} />
