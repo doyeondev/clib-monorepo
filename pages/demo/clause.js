@@ -29,6 +29,7 @@ const Clause = () => {
   const [contractList, setContractList] = useState([])
   const [clauseList, setClauseList] = useState([])
   const [categoryList, setCategoryList] = useState([])
+  const [categoryHolder, setCategoryHolder] = useState([])
   const [clickedCategory, setClickedCategory] = useState([])
 
   const [currentCategory, setCurrentCategory] = useState([])
@@ -42,9 +43,21 @@ const Clause = () => {
         const clause_category = await getClauseCategoryList()
         console.log('clip_clause', clip_clause)
         console.log('clause_category', clause_category)
-        setContractList(_.orderBy(clip_clause, ['clause_category', 'idx'], ['asc', 'asc']))
-        setClauseList(_.orderBy(clip_clause, ['clause_category', 'idx'], ['asc', 'asc']))
-        setCategoryList(clause_category)
+        setContractList(
+          _.orderBy(
+            clip_clause.filter((x) => x.disabled !== true),
+            ['clause_category', 'idx'],
+            ['asc', 'asc']
+          )
+        )
+        setClauseList(
+          _.orderBy(
+            clip_clause.filter((x) => x.disabled !== true),
+            ['clause_category', 'idx'],
+            ['asc', 'asc']
+          )
+        )
+        setCategoryHolder(clause_category)
         setCurrentCategory(clause_category[0])
         setLoaded(true)
       }
@@ -54,18 +67,22 @@ const Clause = () => {
 
   useEffect(() => {
     if (loaded === true && clauseList.length > 0) {
-      let updatedCategoryList = [...categoryList]
+      let updatedCategoryList = [...categoryHolder]
+      let updatedClauseList = [...clauseList]
 
-      for (let i = 0; i < categoryList.length; i++) {
-        const clauseHolder = clauseList.filter((x) => x.clause_category === categoryList[i]._id)
+      for (let i = 0; i < updatedClauseList.length; i++) {
+        updatedClauseList[i].color = 'blue'
+      }
+      for (let i = 0; i < categoryHolder.length; i++) {
+        const clauseHolder = updatedClauseList.filter((x) => x.clause_category === categoryHolder[i]._id)
         updatedCategoryList[i].assets = clauseHolder
       }
-      let data = { assets: clauseList, title: '전체', color: 'zinc', title_en: 'All', idx: 0, _id: 'allClauses' } // 전체 계약서 모음
+      let data = { assets: updatedClauseList, title: '전체', color: 'blue', title_en: 'All', idx: 0, _id: 'allClauses' } // 전체 계약서 모음
       updatedCategoryList[0]._id !== 'allClauses' && updatedCategoryList.unshift(data)
 
       setCategoryList(updatedCategoryList)
     }
-  }, [loaded, clauseList])
+  }, [loaded, clauseList, categoryHolder])
 
   const updateCategory = (e) => {
     console.log('clicked id', e.target.id)
@@ -304,8 +321,18 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
           {/* _.orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc']); */}
           {_.orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc']).map((item, index) => {
             const category = categoryList.filter((x) => x._id === item.clause_category)[0]
+            console.log('item', item)
             console.log('category', _.orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc']))
             const colors = require('tailwindcss/colors')
+            let categoryColor
+            if (clickedCategory.includes('allClauses')) {
+              categoryColor = categoryList.filter((x) => x._id === item.clause_category)[0]?.color
+              console.log('categoryList.filter((x) => x._id === item.clause_category)[0]', categoryList.filter((x) => x._id === item.clause_category)[0])
+              console.log('item.clause_category', item)
+              console.log('categoryColor', categoryColor)
+            } else {
+              categoryColor = category?.color
+            }
             return (
               <div key={index} className="mt-5 flex w-full border-b pb-5">
                 <div className="h-auto w-5 flex-none grow border-l-4 border-gray-500"></div>
@@ -317,7 +344,7 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
                         {category.title} ({category.title_en})
                       </div> */}
                       {/* <div style={{ backgroundColor: colors[`${category?.color ? category.color : 'zinc'}`]['100'] }} className={`rounded px-2 py-0.5 text-xs font-semibold text-gray-700 group-hover:visible`}> */}
-                      <div style={{ backgroundColor: colors[`${category?.color}`]['100'] }} className={`rounded px-2 py-0.5 text-xs font-semibold text-gray-700 group-hover:visible`}>
+                      <div style={{ backgroundColor: colors[`${categoryColor}`]['100'] }} className={`rounded px-2 py-0.5 text-xs font-semibold text-gray-700 group-hover:visible`}>
                         {/* <div className={`rounded px-2 py-0.5 text-xs font-semibold text-gray-700 group-hover:visible`}> */}
                         {/* <div className={`rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-gray-700 group-hover:visible`}> */}
                         {category.title_en} · {category.title} 조항
