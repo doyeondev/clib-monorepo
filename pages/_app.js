@@ -3,6 +3,7 @@ import Script from 'next/script'
 import Head from 'next/head'
 import React, { useEffect, useState, Fragment, createContext, useContext } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 // import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
 // import { ThemeProvider } from '@material-tailwind/react'
@@ -176,6 +177,9 @@ export default function App({ Component, pageProps }) {
                   required=""
                 />
               </div>
+              {/* <div className="mr-auto w-full bg-black">
+                <Link href={`/demo`}>데모 페이지 접속하기</Link>
+              </div> */}
             </main>
           </>
         ) : (

@@ -79,7 +79,6 @@ const Clause = () => {
       }
       let data = { assets: updatedClauseList, title: '전체', color: 'blue', title_en: 'All', idx: 0, _id: 'allClauses' } // 전체 계약서 모음
       updatedCategoryList[0]._id !== 'allClauses' && updatedCategoryList.unshift(data)
-
       setCategoryList(updatedCategoryList)
     }
   }, [loaded, clauseList, categoryHolder])
@@ -295,12 +294,8 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
           })} */}
           <div className="mx-auto w-[220px] space-y-2 px-2">
             {categoryList.map((elem, index) => {
-              // console.log('elem', elem)
               return (
                 <div onClick={(e) => updateCategory(e)} id={elem._id} className={`mr-1.5 flex w-full cursor-pointer items-center rounded px-3 py-1 hover:bg-fuchsia-100/50 ${clickedCategory.includes(elem._id) && ''}`} key={index}>
-                  {/* <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="mr-3 h-6 w-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg> */}
                   <input readOnly type="checkbox" className={`pointer-events-none mr-4 h-4 w-4 rounded border-gray-300 bg-gray-100 text-fuchsia-500`} checked={clickedCategory.includes(elem._id) && true} />
                   <p className={`pointer-events-none text-[13px] ${clickedCategory.includes(elem._id) ? 'font-bold text-gray-700' : 'text-gray-500'}`}>
                     {elem.title} 조항 ({elem.assets?.length})
@@ -309,9 +304,6 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
               )
             })}
             <div onClick={(e) => updateCategory(e)} id="clippedList" className={`mr-1.5 flex w-full cursor-pointer items-center rounded px-3 py-1 hover:bg-fuchsia-100/50`}>
-              {/* <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="mr-3 h-6 w-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg> */}
               <input readOnly type="checkbox" className={`pointer-events-none mr-4 h-4 w-4 rounded border-gray-300 bg-gray-100 text-fuchsia-500`} checked={currentCategory === 'clippedList' && true} />
               <p className={`pointer-events-none text-[13px] ${currentCategory === 'clippedList' ? 'font-bold text-gray-700' : 'text-gray-500'}`}>클립한 조항 ({clippedClause.length})</p>
             </div>
@@ -320,6 +312,7 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
         <div className="flex w-[820px] flex-col">
           {/* _.orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc']); */}
           {_.orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc']).map((item, index) => {
+            console.log("_.orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc'])", _.orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc']))
             const category = categoryList.filter((x) => x._id === item.clause_category)[0]
             console.log('item', item)
             console.log('category', _.orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc']))
@@ -404,9 +397,7 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
                         </button>
                       </Tooltip>
                     </div>
-                    {/* <div className="my-1 w-full border-b-2 border-dotted"></div> */}
                     <div className="flex flex-col pt-2 text-[13px] leading-relaxed">
-                      {/* <p className="w-fit font-medium text-gray-600">개요</p> */}
                       {item.note && (
                         <div className="note flex items-start space-x-1.5 pb-4 pt-2 text-xs font-semibold tracking-wide">
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="mt-0 h-3.5 w-3.5 stroke-yellow-400">
@@ -420,7 +411,6 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
                           <div dangerouslySetInnerHTML={{ __html: item.note }} className=""></div>
                         </div>
                       )}
-                      {/* <p className="w-fit pt-4 font-medium text-gray-600">본문 내용</p> */}
                       <div className="flex w-full space-x-8">
                         <div className="flex w-[50%] flex-col">
                           <h2 className="mb-1 text-[15px] font-bold">{item.title_ko}</h2>
@@ -431,33 +421,8 @@ const ContractList = ({ contractList, currentIndex, setCurrentIndex, maxIndex, d
                           <div key={item._id} dangerouslySetInnerHTML={{ __html: item.content_en }} className="clause-css text-xs tracking-wide text-gray-800"></div>
                         </div>
                       </div>
-                      {/* {item.paragraph.map((elem) => {
-                      if (elem.tag === 'p') {
-                        return (
-                          <p key={elem._id} className="line-clamp-5 text-gray-900">
-                            {elem.text}
-                          </p>
-                        )
-                      } else if (elem.tag === 'ol') {
-                        return <div key={elem._id} dangerouslySetInnerHTML={{ __html: elem.html }} className="preview-doc line-clamp-5 text-gray-900"></div>
-                      }
-                    })} */}
                     </div>
                   </div>
-                  {/* <div className="flex justify-between text-[13px]">
-                  <div className="flex flex-col">
-                    <p className="text-gray-500">계약 당사자(갑)</p>
-                    <p className="text-gray-800">{item.partyA}</p>
-                  </div>
-                  <div className="flex flex-col">
-                    <p className="text-gray-500">계약 당사자(을)</p>
-                    <p className="text-gray-800">{item.partyB}</p>
-                  </div>
-                  <div className="flex flex-col">
-                    <p className="text-gray-500">산업</p>
-                    <p className="text-gray-800">{item.industry}</p>
-                  </div>
-                </div> */}
                 </div>
               </div>
             )
