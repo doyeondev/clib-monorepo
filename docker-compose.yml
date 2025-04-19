@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # directus-clib 서비스
+  directus-clib:
+    container_name: directus-clib
+    image: directus/directus:latest
+    ports:
+      - 8056:8055
+    env_file:
+      - ./docker/.env.directus
+    environment:
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - clib-network
+
+  # Redis 설정 추가
+  redis:
+    image: redis:7.2-alpine
+    container_name: clib-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass "" # 비밀번호 설정이 필요하면 --requirepass "비밀번호" 추가
+    restart: unless-stopped
+    networks:
+      - clib-network
+
+  # Redis UI 툴
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: clib-redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - '8090:8081'
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - clib-network
+
+networks:
+  clib-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
