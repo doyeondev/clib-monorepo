@@ -2,7 +2,7 @@ import React, { useEffect, useState, createContext, useContext, MouseEvent } fro
 import { useNavigate } from 'react-router-dom'
 
 // 컴포넌트 임포트
-import { Loader } from '../../components/clib/Loader'
+import Spinner from '../../components/clib/Spinner'
 import Layout from '../../components/layoutDemo'
 import DashboardFooter from '../../components/ui/Pagination'
 
@@ -19,7 +19,7 @@ import { getClibDataset, getClauseCategoryList } from '../../api/clib'
 
 // 타입 정의
 interface ClauseItem {
-    _id: string
+    id: string
     clause_category: string
     title_ko: string
     title_en: string
@@ -36,7 +36,7 @@ interface ClauseItem {
 }
 
 interface CategoryItem {
-    _id: string
+    id: string
     title: string
     title_en: string
     color: string
@@ -191,7 +191,7 @@ const Clause = () => {
                 } else {
                     // 기본 카테고리 설정
                     const defaultCategory = [{
-                        _id: 'default',
+                        id: 'default',
                         title: '기본 카테고리',
                         title_en: 'Default',
                         color: 'blue',
@@ -217,7 +217,7 @@ const Clause = () => {
 
             // 각 카테고리에 해당하는 조항 리스트 할당
             for (let i = 0; i < updatedCategoryList.length; i++) {
-                const categoryItems = clauseList.filter(x => x.clause_category === updatedCategoryList[i]._id)
+                const categoryItems = clauseList.filter(x => x.clause_category === updatedCategoryList[i].id)
                 updatedCategoryList[i].assets = categoryItems
                 updatedCategoryList[i].color = updatedCategoryList[i].color || 'blue'
             }
@@ -229,10 +229,10 @@ const Clause = () => {
                 color: 'blue',
                 title_en: 'All',
                 idx: 0,
-                _id: 'allClauses'
+                id: 'allClauses'
             }
 
-            if (updatedCategoryList[0]?._id !== 'allClauses') {
+            if (updatedCategoryList[0]?.id !== 'allClauses') {
                 updatedCategoryList.unshift(allCategory)
             }
 
@@ -249,7 +249,7 @@ const Clause = () => {
         if (clauseList.length > 0) {
             if (clickedCategory.includes('clippedList')) {
                 // 클립된 항목만 표시
-                setContractList(clauseList.filter(x => clippedClause.includes(x._id)))
+                setContractList(clauseList.filter(x => clippedClause.includes(x.id)))
                 setCurrentCategory('clippedList')
             } else if (clickedCategory.length < 1) {
                 // 선택된 카테고리가 없으면 자동으로 전체 선택
@@ -257,11 +257,11 @@ const Clause = () => {
             } else if (clickedCategory.includes('allClauses')) {
                 // 전체 카테고리 선택 시 모든 항목 표시
                 setContractList(clauseList)
-                setCurrentCategory(categoryList.filter(x => x._id === 'allClauses'))
+                setCurrentCategory(categoryList.filter(x => x.id === 'allClauses'))
             } else {
                 // 선택된 카테고리에 해당하는 항목만 표시
                 const newClauseList = clauseList.filter(x => clickedCategory.includes(x.clause_category))
-                const newCategory = categoryList.filter(x => clickedCategory.includes(x._id))
+                const newCategory = categoryList.filter(x => clickedCategory.includes(x.id))
 
                 setContractList(newClauseList)
                 setCurrentCategory(newCategory)
@@ -314,7 +314,7 @@ const Clause = () => {
         }
     }
 
-    if (loading) return <Loader />
+    if (loading) return <Spinner />
     if (error) return <div>오류가 발생했습니다: {error.message}</div>
 
     return (
@@ -461,17 +461,17 @@ const ContractList: React.FC<ContractListProps> = ({
                         {categoryList.map((elem, index) => (
                             <div
                                 onClick={(e) => updateCategory(e)}
-                                id={elem._id}
-                                className={`mr-1.5 flex w-full cursor-pointer items-center rounded px-3 py-1 hover:bg-fuchsia-100/50 ${clickedCategory.includes(elem._id) ? 'bg-gray-100' : ''}`}
+                                id={elem.id}
+                                className={`mr-1.5 flex w-full cursor-pointer items-center rounded px-3 py-1 hover:bg-fuchsia-100/50 ${clickedCategory.includes(elem.id) ? 'bg-gray-100' : ''}`}
                                 key={index}
                             >
                                 <input
                                     readOnly
                                     type="checkbox"
                                     className="pointer-events-none mr-4 h-4 w-4 rounded border-gray-300 bg-gray-100 text-fuchsia-500"
-                                    checked={clickedCategory.includes(elem._id)}
+                                    checked={clickedCategory.includes(elem.id)}
                                 />
-                                <p className={`pointer-events-none text-[13px] ${clickedCategory.includes(elem._id) ? 'font-bold text-gray-700' : 'text-gray-500'}`}>
+                                <p className={`pointer-events-none text-[13px] ${clickedCategory.includes(elem.id) ? 'font-bold text-gray-700' : 'text-gray-500'}`}>
                                     {elem.title} 조항 ({elem.assets?.length || 0})
                                 </p>
                             </div>
@@ -497,7 +497,7 @@ const ContractList: React.FC<ContractListProps> = ({
                 {/* 조항 리스트 */}
                 <div className="flex flex-1 flex-col">
                     {_.orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc']).map((item, index) => {
-                        const category = categoryList.find(x => x._id === item.clause_category)
+                        const category = categoryList.find(x => x.id === item.clause_category)
                         const categoryColor = category?.color || 'blue'
 
                         // 색상 값을 가져오는 부분은 백엔드와 동기화가 필요합니다
@@ -519,13 +519,13 @@ const ContractList: React.FC<ContractListProps> = ({
                                             </div>
 
                                             <button
-                                                id={item._id}
+                                                id={item.id}
                                                 name="clause"
                                                 onClick={(e) => onClipClick(e)}
                                                 className="group mt-1 transform cursor-pointer outline-none transition-transform active:scale-75"
-                                                title={clippedClause.includes(item._id) ? "즐겨찾기에서 삭제" : "즐겨찾기에 추가"}
+                                                title={clippedClause.includes(item.id) ? "즐겨찾기에서 삭제" : "즐겨찾기에 추가"}
                                             >
-                                                {!clippedClause.includes(item._id) ? (
+                                                {!clippedClause.includes(item.id) ? (
                                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="pointer-events-none h-5 w-5 fill-gray-400 group-hover:fill-[#BB22E2]">
                                                         <path
                                                             fillRule="evenodd"
@@ -545,7 +545,7 @@ const ContractList: React.FC<ContractListProps> = ({
                                             </button>
 
                                             {/* 토스트 알림 (조건부 렌더링) */}
-                                            {toastDetail.id === item._id && toastState && (
+                                            {toastDetail.id === item.id && toastState && (
                                                 <div className="absolute right-12 z-50 rounded bg-white p-2 shadow-md">
                                                     {toastDetail.action === '추가' ? (
                                                         <div className="flex h-full w-full items-center space-x-2 px-1">
@@ -670,7 +670,7 @@ const ArticleList: React.FC<ArticleListProps> = ({
     return (
         <main className="mx-auto flex w-[920px] flex-col justify-between px-[10vw] py-6">
             {articleGroup[currentIndex].map((item: any, index: number) => (
-                <div key={item._id || index} className="mt-4 flex w-full border-b pb-4">
+                <div key={item.id || index} className="mt-4 flex w-full border-b pb-4">
                     <div className="h-auto w-5 flex-none grow border-l-4 border-gray-500"></div>
                     <div className="flex w-full grow flex-col text-sm">
                         <div className="flex flex-col">
@@ -947,7 +947,7 @@ const SearchResult: React.FC<SearchResultProps> = ({
         return (
             <div className="flex w-[458px] flex-col rounded rounded-b-lg bg-white shadow">
                 {searchResult.map((resultObj, index) => {
-                    const category = categoryList.find((x) => x._id === resultObj.clause_category)
+                    const category = categoryList.find((x) => x.id === resultObj.clause_category)
 
                     let matchingTerm, additionalInfo
                     // 1. 계약서 제목 검색
@@ -962,7 +962,7 @@ const SearchResult: React.FC<SearchResultProps> = ({
                         return (
                             <div
                                 key={index}
-                                id={category._id}
+                                id={category.id}
                                 onClick={(e) => {
                                     updateCategory(e)
                                     setSearchTerm('')
@@ -971,7 +971,7 @@ const SearchResult: React.FC<SearchResultProps> = ({
                             >
                                 <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className="pointer-events-none"></p>
                                 <div className="ml-4 flex items-center space-x-2 text-xs">
-                                    <div key={category._id} className="rounded px-1.5 py-0.5 text-gray-700">
+                                    <div key={category.id} className="rounded px-1.5 py-0.5 text-gray-700">
                                         {category?.title_en || ''}
                                     </div>
                                 </div>

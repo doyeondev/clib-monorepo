@@ -78,8 +78,10 @@ function App() {
 
         // 새로운 API 응답 구조 처리 코드 (주석 처리됨)
         if (data && Array.isArray(data)) {
-          setContractAsset(data[1]);
-          console.log('[App] contractAsset 설정 완료, 항목 수:', data[1].length);
+          // setContractAsset(data[1]);
+          setContractAsset(data);
+
+          console.log('[App] contractAsset 설정 완료, 항목 수:', data.length);
         } else {
           console.log('[App] 계약서 데이터 형식이 예상과 다릅니다:', data);
         }

@@ -20,6 +20,7 @@ public class JsonTypes {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
+
     /**
      * Object 배열을 JSON으로 변환하는 컨버터
      * 예: List<Map<String, Object>> → JSON 배열

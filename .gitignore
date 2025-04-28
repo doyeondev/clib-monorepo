@@ -74,3 +74,7 @@ packages/*/.turbo
 packages/*/dist
 packages/*/build
 packages/*/.env
+*.jar
+target/
+
+_docs

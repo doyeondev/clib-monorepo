@@ -5,9 +5,10 @@ import path from 'path';
 // https://vite.dev/config/
 export default defineConfig({
 	plugins: [react()],
-	esbuild: {
-		drop: ['console', 'debugger'], // console.*과 debugger 제거
-	},
+
+	// esbuild: {
+	// 	drop: ['console', 'debugger'], // console.*과 debugger 제거
+	// },
 	define: {
 		// process.env 변수를 전역으로 사용할 수 있게 합니다
 		'process.env': process.env,

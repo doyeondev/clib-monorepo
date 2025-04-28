@@ -3,9 +3,11 @@ package com.clib.infra.redis;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -28,8 +30,9 @@ public class RedisConfig {
     /**
      * 캐시에 사용할 ObjectMapper 설정
      * 타입 정보를 포함하여 직렬화/역직렬화에 사용
+     * 이 ObjectMapper는 Redis 캐시에만 사용되며 API 응답에는 사용되지 않음
      */
-    @Bean
+    @Bean(name = "redisObjectMapper")
     public ObjectMapper redisObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.activateDefaultTyping(
@@ -44,7 +47,8 @@ public class RedisConfig {
      * GenericJackson2JsonRedisSerializer 생성
      */
     @Bean
-    public GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer(ObjectMapper redisObjectMapper) {
+    public GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer(
+            @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper) {
         return new GenericJackson2JsonRedisSerializer(redisObjectMapper);
     }
 

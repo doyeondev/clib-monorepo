@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DragAndDrop } from '../../components/clib/DragAndDrop';
 import { formatDate } from '../../utils/dateUtils';
-import Layout from '../../components/layout/Layout';
+import Layout from '../../components/layoutDemo'
 import Select from '../../components/ui/Select';
 import { uploadDocxFile, insert_contractData } from '../../services/upload';
 import {

@@ -5,7 +5,7 @@ import _ from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
 import axios from 'axios'
 import { SessionContext } from '../../App'
-import Layout from '../../components/layout/Layout'
+import Layout from '../../components/layoutDemo'
 import Spinner from '../../components/clib/Spinner'
 import SidePanel from '../../components/clib/Sidepanel'
 import { getClauseAssets } from '../../api/clib'
@@ -148,10 +148,10 @@ const Search: FC = () => {
                 // 새로운 API 엔드포인트 사용
                 const clauseAssetData = await getClauseAssets()
 
-                console.log('[Search] API에서 받은 계약서 조항 데이터:', clauseAssetData.items[1])
+                console.log('[Search] API에서 받은 계약서 조항 데이터:', clauseAssetData.items)
 
                 if (clauseAssetData) {
-                    setData(clauseAssetData.items[1])
+                    setData(clauseAssetData.items)
 
                     // 여기서 contractAsset에도 데이터 설정 필요
                     // 참고: SessionContext의 contractAsset은 useState로 관리되므로 직접 접근 불가
