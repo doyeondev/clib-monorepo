@@ -1,99 +1,51 @@
-import React, { FC, useEffect, useState, createContext, useContext, useRef } from 'react'
+import React, { FC, useEffect, useState, useRef, useContext } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { getRegExp } from 'korean-regexp'
 import _ from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
 import axios from 'axios'
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { SessionContext } from '../../App'
 import Layout from '../../components/layoutDemo'
 import Spinner from '../../components/clib/Spinner'
 import SidePanel from '../../components/clib/Sidepanel'
 import { getClauseAssets } from '../../api/clib'
-
-// 아티클(조항) 타입 정의
-interface ArticleTypes {
-    docId: string;
-    contract_name?: string;
-    clause_title?: string;
-    clause_content?: string;
-    cIdx?: number;
-    party_a?: string;
-    party_b?: string;
-    industry_name?: string;
-    purpose?: string;
-    fileURL?: string;
-}
-
-// 타입 정의
-interface ContractDetailType {
-    url: string;
-    clauseArray: { idx: number; text: string }[];
-    contentArray: { tag: string; idx: number; text: string; html: string }[][];
-}
-
-// Context 타입 정의
-interface ClauseItem {
-    id: string;
-    clause_title: string;
-    contract_title?: string;
-    contract_asset?: string;
-    partyA?: string;
-    partyB?: string;
-    industry?: string;
-    content_array: Array<{ html: string }>;
-}
-
-type ArticleContextType = {
-    articleData: any[];
-    clauseList: ClauseItem[];
-};
-
-// 에셋 컨텍스트 타입 정의
-interface AssetContextType {
-    data: any;
-    showSidebar: boolean;
-    setShowSidebar: (show: boolean) => void;
-    clickedItem: any;
-    setClickedItem: (item: any) => void;
-    itemData: any;
-    setItemData: (data: any) => void;
-    setSidebarData: (item: any) => void;
-}
-
-// Context 생성
-const ArticleContext = createContext<ArticleContextType>({
-    articleData: [],
-    clauseList: [],
-});
-
-const AssetContext = createContext<AssetContextType>({
-    data: null,
-    showSidebar: false,
-    setShowSidebar: () => { },
-    clickedItem: null,
-    setClickedItem: () => { },
-    itemData: null,
-    setItemData: () => { },
-    setSidebarData: () => { },
-});
+import { handlePaginationClick } from '../../utils/paginationUtil'
+import { filterList } from '../../utils/searchUtil'
+import LoadingOrError from '../../components/common/LoadingOrError'
 
 /**
- * 데이터 가져오기 함수 - 계약서 조항 데이터
- * @deprecated 대신 getClauseAssets 함수 사용
+ * 조항(아티클) 타입 정의 - 계약서 조항의 데이터 구조
  */
-const fetchClauseAsset = async () => {
-    try {
-        const response = await axios.get('https://conan.ai/_functions/clibClauseAsset')
-        console.log('계약서 조항 API 응답:', response.data)
-        return response.data
-    } catch (error) {
-        console.error('계약서 조항 데이터를 가져오는 중 오류 발생:', error)
-        throw error
-    }
+interface ClauseItem {
+    id: string;                      // 조항 고유 ID
+    docId?: string;                  // 문서 ID
+    clause_title: string;            // 조항 제목 (예: "제3조 계약제품의 거래")
+    clause_content?: string;         // 조항 내용
+    contract_title?: string;         // 계약서 제목
+    contract_asset?: string;         // 계약 자산 ID
+    partyA?: string;                 // 계약 당사자(갑)
+    partyB?: string;                 // 계약 당사자(을)
+    industry?: string;               // 산업 분야
+    industry_name?: string;          // 산업 이름 (legacy)
+    purpose?: string;                // 계약 목적
+    fileURL?: string;                // 파일 URL
+    cIdx?: number;                   // 조항 인덱스
+    content_array: Array<{ html: string }>; // 내용 배열 (HTML 형식)
+}
+
+/**
+ * 계약서 상세 정보 타입 정의
+ */
+interface ContractDetailType {
+    url: string;                                 // 계약서 URL
+    clauseArray: { idx: number; text: string }[]; // 조항 배열
+    contentArray: { tag: string; idx: number; text: string; html: string }[][]; // 내용 배열
 }
 
 /**
  * 데이터 가져오기 함수 - 계약서 목록
+ * REFACTORING: 이 함수도 api/clib.ts의 getContractList로 대체 가능하지만
+ * 현재 코드에서 참조하고 있어 유지
  */
 const fetchContractList = async () => {
     try {
@@ -106,143 +58,142 @@ const fetchContractList = async () => {
     }
 };
 
+// QueryClient 생성 - 애플리케이션 전체에서 재사용할 수 있도록 상수로 정의
+export const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 5 * 60 * 1000, // 5분 동안 데이터를 'fresh'하게 유지
+            gcTime: 60 * 60 * 1000, // 1시간 동안 미사용 데이터 캐시 유지
+            retry: 1, // 실패 시 1번 재시도
+            refetchOnWindowFocus: false, // 창 포커스 시 자동 리페치 비활성화
+            refetchOnMount: false, // 컴포넌트 마운트 시 자동 리페치 비활성화 (캐시 데이터 우선 사용)
+        },
+    },
+});
+
+// 루트 컴포넌트
+const QueryWrapper = () => {
+    return <Search />;
+};
+
 /**
  * 조항 검색 페이지 컴포넌트
+ * REFACTORING: Context 제거 후 직접 상태 관리 및 props 전달 방식으로 변경
  */
 const Search: FC = () => {
     const navigate = useNavigate()
-    const [data, setData] = useState<any>(null)
-    const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<Error | null>(null)
 
+    // SessionContext에서 필요한 데이터만 추출
     const { contractAsset } = useContext(SessionContext)
 
-    // SidePanel 관련 상태
+    // REFACTORING: 상태 직접 관리
     const [showSidebar, setShowSidebar] = useState<boolean>(false)
     const [clickedItem, setClickedItem] = useState<any>([])
     const [itemData, setItemData] = useState<any>([])
+    const [clauseList, setClauseList] = useState<ClauseItem[]>([])
 
-    // 컴포넌트 마운트 시 contractAsset 확인
+    // TanStack Query를 사용한 데이터 페칭
+    const { data: clauseAssetData, isLoading: clauseLoading } = useQuery({
+        queryKey: ['clauseAssets'],
+        queryFn: async () => {
+            console.log('[Search] TanStack Query로 조항 데이터 로드 중...')
+            try {
+                const data = await getClauseAssets();
+                console.log('[Search] 조항 데이터 로드 성공:', data?.items?.length || 0, '개 항목');
+                return data || { items: [] };
+            } catch (err) {
+                console.error('[Search] 조항 데이터 로드 실패:', err);
+                setError(err as Error);
+                return { items: [] };
+            }
+        },
+        staleTime: Infinity, // 수동으로 무효화하기 전까지는 항상 캐시 데이터 사용
+        refetchOnMount: false,
+    });
+
+    // clauseAssetData가 변경될 때마다 clauseList 상태 업데이트
     useEffect(() => {
-        console.log('[Search] SessionContext의 contractAsset:', contractAsset);
-        console.log('[Search] contractAsset 길이:', contractAsset?.length || 0);
-        if (contractAsset && contractAsset.length > 0) {
-            console.log('[Search] contractAsset 첫 번째 항목:', {
-                id: contractAsset[0].id,
-                title: contractAsset[0].title
-            });
-        } else {
-            console.log('[Search] contractAsset이 비어있거나 초기화되지 않았습니다.');
+        if (clauseAssetData?.items) {
+            setClauseList(clauseAssetData.items);
         }
+    }, [clauseAssetData]);
+
+    // 로딩 상태 계산
+    const loading = clauseLoading;
+
+    // 디버깅 목적의 useEffect 제거 또는 간소화
+    useEffect(() => {
+        console.log('[Search] SessionContext의 contractAsset:',
+            contractAsset ? `${contractAsset.length}개 항목` : '없음');
     }, [contractAsset]);
 
-    // 데이터 가져오기
+    // 세션 스토리지 아이템 삭제
     useEffect(() => {
-        async function fetchData() {
-            try {
-                console.log('[Search] 데이터 로딩 시작...')
+        // 불필요한 조건 체크 제거
+        sessionStorage.removeItem('item_key') // 계약 키 세션 삭제
+    }, []);
 
-                // 기존 API 엔드포인트 사용 (주석 처리)
-                // const clauseAssetData = await fetchClauseAsset()
+    /**
+     * 사이드바 데이터 설정 함수
+     * @param item 선택된 조항 항목
+     */
+    const setSidebarData = (item: any) => {
+        console.log('검색 결과 항목 클릭됨:', JSON.stringify(item));
 
-                // 새로운 API 엔드포인트 사용
-                const clauseAssetData = await getClauseAssets()
+        // 조항 제목에서 인덱스 추출 (예: "제3조 계약제품의 거래" -> 3)
+        let clauseIndex = -1;
+        if (item.clause_title) {
+            const match = item.clause_title.match(/제(\d+)조/);
+            if (match && match[1]) {
+                clauseIndex = parseInt(match[1]);
+                console.log(`조항 제목에서 추출한 인덱스: ${clauseIndex}`);
 
-                console.log('[Search] API에서 받은 계약서 조항 데이터:', clauseAssetData.items)
-
-                if (clauseAssetData) {
-                    setData(clauseAssetData.items)
-
-                    // 여기서 contractAsset에도 데이터 설정 필요
-                    // 참고: SessionContext의 contractAsset은 useState로 관리되므로 직접 접근 불가
-                    // setContractAsset 함수가 있다면 사용할 수 있지만, 현재 코드에서는 접근할 수 없음
-                    console.log('[Search] contractAsset에 데이터 설정 로직 필요');
-                }
-
-                setLoading(false)
-            } catch (err) {
-                console.error('[Search] 데이터를 가져오는 중 오류 발생:', err)
-                setError(err as Error)
-                setLoading(false)
+                // 인덱스 정보 추가 (명시적으로 할당)
+                item.cIdx = clauseIndex;
+                item.clause_index = clauseIndex;
             }
         }
 
-        fetchData()
+        // 클릭된 아이템 상태 업데이트
+        setClickedItem(item);
 
-        // 세션 스토리지 아이템 삭제
-        if (typeof window !== 'undefined' && sessionStorage.getItem('item_key')) {
-            sessionStorage.removeItem('item_key') // 계약 키 세션 삭제
+        // contractAsset에서 계약서 찾기
+        if (contractAsset?.length > 0) {
+            // 계약서 찾기
+            const match = contractAsset.filter((x: any) => x.id === item.contract_asset);
+            console.log('일치하는 계약서:', match);
+
+            if (match?.length > 0) {
+                // 원본 계약서 데이터를 사용하면서, 클릭한 조항의 인덱스를 설정
+                const updatedMatch = { ...match[0] };
+
+                // 추출한 인덱스 명시적으로 설정
+                if (clauseIndex >= 1) {
+                    updatedMatch.cIdx = clauseIndex;
+                    updatedMatch.clause_index = clauseIndex;
+                }
+
+                setItemData(updatedMatch);
+            }
         }
-    }, [])
+
+        // 사이드바 표시
+        setShowSidebar(true);
+    };
 
     return (
         <Layout>
             <div className="flex flex-col h-[calc(100vh-64px)] overflow-auto">
                 <div className="flex-1">
-                    {loading ? (
-                        <div className="flex justify-center items-center m-8">
-                            <Spinner />
-                        </div>
-                    ) : error ? (
-                        <div className="m-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-                            데이터를 불러오는 중 오류가 발생했습니다: {error.message}
-                        </div>
-                    ) : (
-                        <AssetContext.Provider
-                            value={{
-                                data,
-                                showSidebar,
-                                setShowSidebar,
-                                clickedItem,
-                                setClickedItem,
-                                itemData,
-                                setItemData,
-                                setSidebarData: (item: any) => {
-                                    console.log('검색 결과 항목 클릭됨:', JSON.stringify(item));
-
-                                    // 조항 제목에서 인덱스 추출 (예: "제3조 계약제품의 거래" -> 3)
-                                    let clauseIndex = -1;
-                                    if (item.clause_title) {
-                                        const match = item.clause_title.match(/제(\d+)조/);
-                                        if (match && match[1]) {
-                                            clauseIndex = parseInt(match[1]);
-                                            console.log(`조항 제목에서 추출한 인덱스: ${clauseIndex}`);
-
-                                            // 인덱스 정보 추가 (명시적으로 할당)
-                                            item.cIdx = clauseIndex;
-                                            item.clause_index = clauseIndex;
-                                        }
-                                    }
-
-                                    // 클릭된 아이템 상태 업데이트
-                                    setClickedItem(item);
-
-                                    // contractAsset에서 계약서 찾기
-                                    if (contractAsset && contractAsset.length > 0) {
-                                        // 계약서 찾기
-                                        const match = contractAsset.filter((x: any) => x.id === item.contract_asset);
-                                        console.log('일치하는 계약서:', match);
-
-                                        if (match && match.length > 0) {
-                                            // 원본 계약서 데이터를 사용하면서, 클릭한 조항의 인덱스를 설정
-                                            const updatedMatch = { ...match[0] };
-
-                                            // 추출한 인덱스 명시적으로 설정
-                                            if (clauseIndex >= 1) {
-                                                updatedMatch.cIdx = clauseIndex;
-                                                updatedMatch.clause_index = clauseIndex;
-                                            }
-
-                                            setItemData(updatedMatch);
-                                        }
-                                    }
-
-                                    // 사이드바 표시
-                                    setShowSidebar(true);
-                                }
-                            }}
-                        >
-                            <MainLayout contractList={data?.items || []} />
+                    <LoadingOrError loading={loading} error={error}>
+                        <>
+                            <MainLayout
+                                contractList={clauseAssetData?.items || []}
+                                clauseList={clauseList}
+                                setClauseList={setClauseList}
+                                setSidebarData={setSidebarData}
+                            />
                             {showSidebar && (
                                 <SidePanel
                                     data={itemData}
@@ -251,8 +202,8 @@ const Search: FC = () => {
                                     setShowSidebar={setShowSidebar}
                                 />
                             )}
-                        </AssetContext.Provider>
-                    )}
+                        </>
+                    </LoadingOrError>
                 </div>
             </div>
         </Layout>
@@ -261,83 +212,64 @@ const Search: FC = () => {
 
 interface MainLayoutProps {
     contractList: any[]
+    clauseList: ClauseItem[]
+    setClauseList: React.Dispatch<React.SetStateAction<ClauseItem[]>>
+    setSidebarData: (item: any) => void
 }
 
 /**
  * 메인 레이아웃 컴포넌트
- * @param {MainLayoutProps} props - 계약서 목록
+ * REFACTORING: Context 대신 props로 데이터 전달
+ * @param {MainLayoutProps} props - 메인 레이아웃 속성
  * @returns {JSX.Element} 레이아웃 컴포넌트
  */
-const MainLayout: FC<MainLayoutProps> = ({ contractList }) => {
-    let { data, showSidebar, setShowSidebar, clickedItem, setClickedItem, itemData, setItemData } = useContext(AssetContext)
-    // let { items: clauseAsset } = data || {}
-    // console.log('data', data)
-    let clauseAsset = data
-    const [clauseList, setClauseList] = useState<ClauseItem[]>([])
-
-    const [searchType, setSearchType] = useState('contract')
-    const [currentData, setCurrentData] = useState<any[]>([])
+const MainLayout: FC<MainLayoutProps> = ({ contractList, clauseList, setClauseList, setSidebarData }) => {
+    const [searchType, setSearchType] = useState('article') // 기본값 'article'로 설정
 
     const [articleData, setArticleData] = useState<any[]>([])
-    const [articleGroup, setArticleGroup] = useState<any[][]>([])
 
     // 페이지네이션 관련
     const [contractGroup, setContractGroup] = useState<any[][]>([])
+    const [articleGroup, setArticleGroup] = useState<any[][]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const [maxIndex, setMaxIndex] = useState(0)
 
-    // 페이지네이션 클릭 처리
-    const paginationOnClick = (e: React.MouseEvent<HTMLElement>) => {
-        console.log('clicked - onClickHandler')
-        const target = e.target as HTMLElement
-        const btnId = target.id
-        const type = target.getAttribute('data-name')
+    // 계약서 목록 데이터 fetch
+    const { data: contractListData } = useQuery({
+        queryKey: ['contractList'],
+        queryFn: fetchContractList,
+        enabled: searchType === 'contract', // 계약서 검색 타입일 때만 활성화
+        staleTime: Infinity, // 수동으로 무효화하기 전까지는 항상 캐시 데이터 사용
+        refetchOnMount: false,
+    });
 
-        console.log('btnId : ', btnId)
-        console.log('currentIndex', currentIndex)
-        console.log('maxIndex', maxIndex)
-
-        if (btnId && type === 'paginationBtn') {
-            if (btnId === 'btnNext' && currentIndex < maxIndex) {
-                console.log('entered case 1')
-                setCurrentIndex(currentIndex + 1)
-            } else if (btnId === 'btnPrevious' && currentIndex > 0) {
-                console.log('entered case 2')
-                setCurrentIndex(currentIndex - 1)
-            }
-        }
-
-        if (btnId && type === 'paginationNum') {
-            setCurrentIndex(parseInt(btnId))
-        }
-    }
-
-    // 검색 타입에 따른 데이터 설정
+    // 검색 타입 변경에 따른 데이터 및 최대 인덱스 설정
     useEffect(() => {
-        console.log('searchType', searchType)
+        console.log('검색 타입 변경:', searchType);
+
+        // 검색 타입에 따라 현재 데이터와 최대 인덱스 설정
         if (searchType === 'contract') {
-            setCurrentData(contractGroup)
-            setMaxIndex(contractGroup.length - 1)
+            setMaxIndex(contractGroup.length - 1);
         } else if (searchType === 'article') {
-            setCurrentData(articleGroup)
-            setMaxIndex(articleGroup.length - 1)
+            setMaxIndex(articleGroup.length - 1);
         }
-    }, [searchType, contractGroup, articleGroup])
+    }, [searchType, contractGroup, articleGroup]);
 
     // 컴포넌트 마운트 시 데이터 초기화
     useEffect(() => {
-        setCurrentIndex(0)
-        console.log('from useEffect', clauseAsset)
-        setClauseList(clauseAsset ?? [])
-        setSearchType('article')
+        setCurrentIndex(0);
 
         // 데이터 청크 생성
-        setContractGroup(_.chunk(contractList, 5))
-        setArticleGroup(_.chunk(clauseAsset, 5))
-        setCurrentData(_.chunk(clauseAsset, 5))
-        setMaxIndex(_.chunk(clauseAsset, 5).length - 1)
-        console.log('_.chunk(clauseAsset, 5)', _.chunk(clauseAsset, 5))
-    }, [contractList, clauseAsset])
+        setContractGroup(_.chunk(contractList, 5));
+        setArticleGroup(_.chunk(clauseList, 5));
+
+        setMaxIndex(_.chunk(clauseList, 5).length - 1);
+    }, [contractList, clauseList]);
+
+    // 페이지네이션 처리 함수
+    const handlePaginationOnClick = (e: React.MouseEvent<HTMLElement>) => {
+        handlePaginationClick(e, currentIndex, maxIndex, setCurrentIndex);
+    };
 
     // 검색 타입에 따른 렌더링
     if (searchType === 'contract') {
@@ -347,9 +279,19 @@ const MainLayout: FC<MainLayoutProps> = ({ contractList }) => {
                     if (currentIndex === index) {
                         return (
                             <div key={index}>
-                                <SearchWrapper contractList={contractList} searchType={searchType} setSearchType={setSearchType} />
+                                <SearchWrapper
+                                    contractList={contractList}
+                                    searchType={searchType}
+                                    setSearchType={setSearchType}
+                                    clauseList={clauseList}
+                                    setSidebarData={setSidebarData}
+                                />
                                 <ContractList contractList={elem} />
-                                <DashboardFooter onClickHandler={paginationOnClick} currentIndex={currentIndex} maxIndex={maxIndex} />
+                                <DashboardFooter
+                                    onClickHandler={handlePaginationOnClick}
+                                    currentIndex={currentIndex}
+                                    maxIndex={maxIndex}
+                                />
                             </div>
                         )
                     }
@@ -359,18 +301,25 @@ const MainLayout: FC<MainLayoutProps> = ({ contractList }) => {
         )
     } else if (searchType === 'article') {
         return (
-            <ArticleContext.Provider value={{ articleData, clauseList }}>
-                <div className="bg-white">
-                    <SearchWrapper contractList={contractList} searchType={searchType} setSearchType={setSearchType} />
-                    <ArticleList
-                        contractList={contractList}
-                        articleGroup={articleGroup}
-                        setCurrentIndex={setCurrentIndex}
-                        currentIndex={currentIndex}
-                        maxIndex={maxIndex}
-                    />
-                </div>
-            </ArticleContext.Provider>
+            <div className="bg-white">
+                <SearchWrapper
+                    contractList={contractList}
+                    searchType={searchType}
+                    setSearchType={setSearchType}
+                    clauseList={clauseList}
+                    setSidebarData={setSidebarData}
+                />
+                <ArticleList
+                    contractList={contractList}
+                    clauseList={clauseList}
+                    articleGroup={articleGroup}
+                    setCurrentIndex={setCurrentIndex}
+                    currentIndex={currentIndex}
+                    maxIndex={maxIndex}
+                    setSidebarData={setSidebarData}
+                    contractAsset={contractList}
+                />
+            </div>
         )
     }
 
@@ -379,6 +328,7 @@ const MainLayout: FC<MainLayoutProps> = ({ contractList }) => {
 
 /**
  * 계약서 목록 컴포넌트
+ * REFACTORING: 간소화된 컴포넌트
  */
 interface ContractListProps {
     contractList: any[]
@@ -424,110 +374,45 @@ const ContractList: FC<ContractListProps> = ({ contractList }) => {
 
 /**
  * 조항 목록 컴포넌트
+ * REFACTORING: Context 대신 props로 데이터 전달
  */
 interface ArticleListProps {
-    contractList: any[]
-    articleGroup: any[][]
-    currentIndex: number
-    setCurrentIndex: React.Dispatch<React.SetStateAction<number>>
-    maxIndex: number
+    contractList: any[];
+    clauseList: ClauseItem[];
+    articleGroup: any[][];
+    currentIndex: number;
+    setCurrentIndex: React.Dispatch<React.SetStateAction<number>>;
+    maxIndex: number;
+    setSidebarData: (item: any) => void;
+    contractAsset: any[];
 }
 
-const ArticleList: FC<ArticleListProps> = ({ contractList, articleGroup, currentIndex, setCurrentIndex, maxIndex }) => {
-    const { showSidebar, setShowSidebar, setClickedItem, setItemData } = useContext(AssetContext)
-    const { clauseList } = useContext(ArticleContext)
-    const { contractAsset } = useContext(SessionContext)
-
-    // 페이지네이션 클릭 처리
+const ArticleList: FC<ArticleListProps> = ({
+    contractList,
+    clauseList,
+    articleGroup,
+    currentIndex,
+    setCurrentIndex,
+    maxIndex,
+    setSidebarData,
+    contractAsset
+}) => {
+    // 페이지네이션 클릭 처리 - 유틸 함수 사용
     const paginationOnClick = (e: React.MouseEvent<HTMLElement>) => {
-        console.log('clicked - onClickHandler')
-        const target = e.target as HTMLElement
-        const btnId = target.id
-        const type = target.getAttribute('data-name')
-
-        console.log('btnId : ', btnId)
-        console.log('currentIndex', currentIndex)
-        console.log('maxIndex', maxIndex)
-
-        if (btnId && type === 'paginationBtn') {
-            if (btnId === 'btnNext' && currentIndex < maxIndex) {
-                console.log('entered case 1')
-                setCurrentIndex(currentIndex + 1)
-            } else if (btnId === 'btnPrevious' && currentIndex > 0) {
-                console.log('entered case 2')
-                setCurrentIndex(currentIndex - 1)
-            }
-        }
-
-        if (btnId && type === 'paginationNum') {
-            setCurrentIndex(parseInt(btnId))
-        }
+        handlePaginationClick(e, currentIndex, maxIndex, setCurrentIndex);
     }
 
-    // 조항 클릭 핸들러
+    // 조항 클릭 핸들러 - props로 전달받은 함수 사용
     const handleClauseClick = (item: any) => {
-        console.log('조항 클릭됨 (전체 데이터):', item);
-
-        // 조항 제목에서 인덱스 추출 (예: "제3조 계약제품의 거래" -> 3)
-        let clauseIndex = -1;
-        if (item.clause_title) {
-            const match = item.clause_title.match(/제(\d+)조/);
-            if (match && match[1]) {
-                clauseIndex = parseInt(match[1]);
-                console.log(`조항 제목에서 추출한 인덱스: ${clauseIndex}`);
-
-                // 인덱스 정보 추가 (명시적으로 할당)
-                item.cIdx = clauseIndex;
-                item.clause_index = clauseIndex;
-            }
-        }
-
-        console.log('조항 데이터 구조 (업데이트 후):', {
-            'contract_asset': item.contract_asset,
-            'id': item.id,
-            'docId': item.docId,
-            'cIdx': item.cIdx,
-            'clause_index': item.clause_index,
-            'clause_title': item.clause_title
-        });
-
-        // 1. 클릭된 아이템 상태 업데이트
-        setClickedItem(item);
-
-        // 2. contractAsset에서 계약서 찾기
-        if (contractAsset && contractAsset.length > 0) {
-            // 레거시 방식과 정확히 동일하게 구현: contract_asset으로 계약서 찾기
-            const match = contractAsset.filter((x: any) => x.id === item.contract_asset);
-            console.log('[Legacy Style] 일치하는 계약서:', match);
-
-            // 3. 계약서를 찾은 경우, 원본 계약서 데이터를 그대로 사용
-            if (match && match.length > 0) {
-                // 중요: 원본 계약서 데이터를 사용하면서, 클릭한 조항의 인덱스를 설정
-                const updatedMatch = { ...match[0] };
-
-                // 추출한 인덱스 명시적으로 설정 (중요)
-                if (clauseIndex >= 1) { // 1 이상만 유효하게 처리
-                    updatedMatch.cIdx = clauseIndex;
-                    updatedMatch.clause_index = clauseIndex;
-                    console.log(`[Legacy Style] 설정된 조항 인덱스: ${clauseIndex}`);
-                }
-
-                // 레거시 방식과 동일: 업데이트된 계약서 데이터를 사용
-                setItemData(updatedMatch);
-            }
-        }
-
-        // 6. 사이드바 표시
-        setShowSidebar(true);
+        setSidebarData(item);
     }
 
     return (
         <main className="mx-auto w-[920px] px-[10vw] py-6">
             {clauseList.map((item, index) => {
-                // console.log('item', item)
+                // HTML 내용 결합
                 let CONTENT_HTML = ''
                 for (let i = 0; i < item.content_array.length; i++) {
-                    // console.log('contentList[i].html', item.content_array[i])
                     CONTENT_HTML = CONTENT_HTML.concat(item.content_array[i].html)
                 }
                 return (
@@ -614,6 +499,7 @@ const DashboardFooter: FC<DashboardFooterProps> = ({ onClickHandler, currentInde
 
 /**
  * 푸터 페이지네이션 컴포넌트
+ * REFACTORING: 간소화된 구현
  */
 interface FooterPaginationProps {
     currentIndex: number
@@ -657,14 +543,23 @@ const FooterPagination: FC<FooterPaginationProps> = ({ currentIndex, maxIndex, o
 
 /**
  * 검색 래퍼 컴포넌트
+ * REFACTORING: props 수정 및 SearchInput에 필요한 props 추가
  */
 interface SearchWrapperProps {
     contractList: any[]
     searchType: string
     setSearchType: React.Dispatch<React.SetStateAction<string>>
+    clauseList?: ClauseItem[]
+    setSidebarData?: (item: any) => void
 }
 
-const SearchWrapper: FC<SearchWrapperProps> = ({ contractList, searchType, setSearchType }) => {
+const SearchWrapper: FC<SearchWrapperProps> = ({
+    contractList,
+    searchType,
+    setSearchType,
+    clauseList = [],
+    setSidebarData = () => { }
+}) => {
     return (
         <section className="mt-6 flex flex-col px-[10vw] py-6">
             <aside className="mx-auto flex w-fit items-center gap-x-2 text-xl">
@@ -688,50 +583,50 @@ const SearchWrapper: FC<SearchWrapperProps> = ({ contractList, searchType, setSe
                 )}
                 <h2 className="font-semibold">{searchType === 'contract' ? '어떤 계약서 양식이 필요하신가요?' : '계약서 조항을 검색하세요!'}</h2>
             </aside>
-            <SearchInput searchTerm={''} setSearchTerm={() => { }} searchType={searchType} setSearchType={setSearchType} />
+            <SearchInput
+                searchTerm={''}
+                setSearchTerm={() => { }}
+                searchType={searchType}
+                setSearchType={setSearchType}
+                contractList={contractList}
+                clauseList={clauseList}
+                setSidebarData={setSidebarData}
+            />
         </section>
     )
 }
 
 /**
  * 검색 입력 컴포넌트
+ * REFACTORING: Context 대신 props로 데이터 전달
  */
 interface SearchInputProps {
-    searchTerm: string
-    setSearchTerm: React.Dispatch<React.SetStateAction<string>>
-    searchType: string
-    setSearchType: React.Dispatch<React.SetStateAction<string>>
+    searchTerm: string;
+    setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+    searchType: string;
+    setSearchType: React.Dispatch<React.SetStateAction<string>>;
+    contractList?: any[];
+    clauseList?: ClauseItem[];
+    setSidebarData?: (item: any) => void;
 }
 
-const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setSearchTerm: parentSetSearchTerm, searchType, setSearchType }) => {
+const SearchInput: FC<SearchInputProps> = ({
+    searchTerm: initialSearchTerm,
+    setSearchTerm: parentSetSearchTerm,
+    searchType,
+    setSearchType,
+    contractList = [],
+    clauseList = [],
+    setSidebarData = () => { }
+}) => {
     const navigate = useNavigate()
     const [searchTerm, setSearchTerm] = useState<string>(initialSearchTerm || '')
     const [searchResult, setSearchResult] = useState<any[]>([])
     const [showResults, setShowResults] = useState<boolean>(false) // 검색 결과 표시 여부
-    const { clauseList } = useContext(ArticleContext)
-    const { contractAsset } = useContext(SessionContext)
-    const { setSidebarData } = useContext(AssetContext)
 
     // 검색 인풋과 결과 컨테이너에 대한 ref
     const searchContainerRef = useRef<HTMLDivElement>(null)
     const searchInputRef = useRef<HTMLInputElement>(null)
-
-    // 컴포넌트 마운트 시 데이터 로드
-    const [contractList, setContractList] = useState<any[]>([])
-
-    useEffect(() => {
-        if (contractAsset && contractAsset.length > 0) {
-            setContractList(contractAsset)
-        } else {
-            // 필요시 데이터 가져오기
-            console.log("또 fetchContractList")
-            fetchContractList().then(data => {
-                if (data && data.items) {
-                    setContractList(data.items)
-                }
-            }).catch(err => console.error('계약서 목록 로딩 실패:', err))
-        }
-    }, [contractAsset])
 
     // 검색어가 변경될 때마다 자동으로 검색 결과 업데이트 및 검색 결과 표시
     useEffect(() => {
@@ -740,23 +635,29 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
             return
         }
 
-        let filteredList: any[] = []
+        // 검색 필드 정의
+        let filteredList: any[] = [];
 
-        console.log('검색 실행:', searchTerm, searchType)
         if (searchType === 'contract') {
-            filteredList = runSearch(searchTerm)
-        }
-        if (searchType === 'article') {
-            filteredList = runClauseSearch(searchTerm)
+            // 계약서 검색 - 제목, 당사자, 산업, 목적
+            filteredList = filterList(searchTerm, contractList, ['title', 'partyA', 'partyB', 'industry', 'purpose']);
+        } else {
+            // 조항 검색 - 조항 제목, 내용 (content_array 특수 처리 필요)
+            try {
+                filteredList = clauseList.filter(clause => {
+                    const regex = new RegExp(searchTerm, 'i');
+                    return regex.test(clause.clause_title) ||
+                        clause.content_array.some(content => regex.test(content.html || ''));
+                });
+            } catch (e) {
+                console.error('조항 검색 오류:', e);
+            }
         }
 
-        console.log('검색 결과:', filteredList.length, '개')
         setSearchResult(filteredList)
 
         // 검색어가 있고 결과가 하나 이상 있을 때만 결과 표시
-        if (searchTerm.length > 0 && filteredList.length > 0) {
-            setShowResults(true)
-        }
+        setShowResults(searchTerm.length > 0 && filteredList.length > 0);
     }, [searchTerm, searchType, contractList, clauseList])
 
     // 외부 클릭 감지 - 검색 결과 외부 클릭 시 결과 숨김
@@ -767,13 +668,8 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
             }
         }
 
-        // 이벤트 리스너 등록
         document.addEventListener('mousedown', handleClickOutside)
-
-        // 컴포넌트 언마운트 시 이벤트 리스너 제거
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-        }
+        return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
     // 검색 인풋 클릭 시 결과 다시 표시
@@ -786,52 +682,17 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
     // 검색 폼 제출 핸들러
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        console.log('폼 제출 - 검색 실행:', searchTerm, searchType)
         // 부모 컴포넌트에 검색어 상태 업데이트
         parentSetSearchTerm(searchTerm)
     }
 
+    // 검색 타입 리셋 함수
     function resetSearch(newType: string) {
         setSearchTerm('')
         parentSetSearchTerm('')
         setSearchResult([])
         setShowResults(false)
         setSearchType(newType)
-    }
-
-    // 계약서 검색 실행
-    function runSearch(term: string) {
-        if (!term || !contractList || contractList.length === 0) return []
-
-        try {
-            const regex = getRegExp(term)
-            return contractList.filter(contract =>
-                regex.test(contract.title) ||
-                regex.test(contract.partyA) ||
-                regex.test(contract.partyB) ||
-                regex.test(contract.industry || '') ||
-                regex.test(contract.purpose)
-            )
-        } catch (e) {
-            console.error('검색 오류:', e)
-            return []
-        }
-    }
-
-    // 조항 검색 실행
-    function runClauseSearch(term: string) {
-        if (!term || !clauseList) return []
-
-        try {
-            const regex = getRegExp(term)
-            return clauseList.filter(clause =>
-                regex.test(clause.clause_title) ||
-                regex.test(clause.content_array?.[0]?.html || '')
-            )
-        } catch (e) {
-            console.error('조항 검색 오류:', e)
-            return []
-        }
     }
 
     return (
@@ -929,7 +790,14 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
                     </div>
                 </form>
 
-                {searchResult.length > 0 && showResults && <SearchResult searchResult={searchResult} searchTerm={searchTerm} searchType={searchType} />}
+                {searchResult.length > 0 && showResults &&
+                    <SearchResult
+                        searchResult={searchResult}
+                        searchTerm={searchTerm}
+                        searchType={searchType}
+                        setSidebarData={setSidebarData}
+                    />
+                }
             </div>
         </>
     )
@@ -937,90 +805,80 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
 
 /**
  * 검색 결과 컴포넌트
+ * REFACTORING: Context 대신 props로 데이터 전달
  */
 interface SearchResultProps {
-    searchResult: any[]
-    searchTerm: string
-    searchType: string
+    searchResult: any[];
+    searchTerm: string;
+    searchType: string;
+    setSidebarData: (item: any) => void;
 }
 
-const SearchResult: FC<SearchResultProps> = ({ searchResult, searchTerm, searchType }) => {
-    const { setSidebarData } = useContext(AssetContext);
+const SearchResult: FC<SearchResultProps> = ({
+    searchResult,
+    searchTerm,
+    searchType,
+    setSidebarData
+}) => {
+    // 불필요한 로깅 제거
+    return (
+        <div className="absolute z-50 w-full flex flex-col rounded bg-gray-100 shadow-sm top-[120px]">
+            {/* 스크롤 가능한 결과 컨테이너 */}
+            <div className="max-h-[400px] overflow-y-auto">
+                {searchResult.map((resultObj, index) => {
+                    let matchingTerm, additionalInfo;
 
-    console.log('searchResult:', searchResult);
+                    // if/else 간소화 - 중복 코드 줄이기
+                    const isContract = searchType === 'contract';
 
-    // Search result 항목 클릭 시 조항 데이터 구조 로깅을 위한 함수
-    const handleSearchItemClick = (resultObj: any) => {
-        console.log('[SearchResult] 클릭된 검색 결과 항목:', resultObj);
-        console.log('[SearchResult] 데이터 구조:', {
-            'id': resultObj.id,
-            'contract_asset': resultObj.contract_asset,
-            'clause_title': resultObj.clause_title,
-            'contract_title': resultObj.contract_title
-        });
-        setSidebarData(resultObj);
-    };
+                    // 일치하는 텍스트 강조 표시
+                    matchingTerm = (isContract ? resultObj.title : resultObj.clause_title)
+                        .replace(searchTerm, `<span class="font-bold text-blue-800">${searchTerm}</span>`);
 
-    if (searchResult.length > 0) {
-        return (
-            <div className="absolute z-50 w-full flex flex-col rounded bg-gray-100 shadow-sm top-[120px]">
-                {/* 스크롤 가능한 결과 컨테이너 */}
-                <div className="max-h-[400px] overflow-y-auto">
-                    {searchResult.map((resultObj, index) => {
-                        let matchingTerm, additionalInfo;
+                    // 추가 정보 설정
+                    additionalInfo = `<p>${isContract
+                        ? (resultObj.source || resultObj.contract_title || '표준계약서')
+                        : (resultObj.contract_title || '표준계약서')}</p>`;
 
-                        // 1. 계약서 제목 검색
-                        if (searchType === 'contract') {
-                            matchingTerm = resultObj.title.replace(
-                                searchTerm,
-                                `<span class="font-bold text-blue-800">${searchTerm}</span>`
-                            );
-                            additionalInfo = `<p>${resultObj.source || resultObj.contract_title || '표준계약서'}</p>`;
-                            return (
-                                <Link
-                                    key={index}
-                                    to={`/search/${resultObj.id}`}
-                                    className="flex cursor-pointer items-center justify-between border-b bg-white px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50/50"
-                                >
-                                    <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className=""></p>
-                                    <div
-                                        dangerouslySetInnerHTML={{ __html: additionalInfo }}
-                                        className="rounded-lg bg-slate-50 px-2 py-1 text-xs text-gray-600 shadow-sm"
-                                    ></div>
-                                </Link>
-                            );
-                        } else if (searchType === 'article') {
-                            matchingTerm = resultObj.clause_title.replace(
-                                searchTerm,
-                                `<span class="font-bold text-blue-800">${searchTerm}</span>`
-                            );
-                            additionalInfo = `<p>${resultObj.contract_title || '표준계약서'}</p>`;
-                            return (
+                    // 계약서 또는 조항에 따라 다른 컴포넌트 반환
+                    if (isContract) {
+                        return (
+                            <Link
+                                key={index}
+                                to={`/search/${resultObj.id}`}
+                                className="flex cursor-pointer items-center justify-between border-b bg-white px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50/50"
+                            >
+                                <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className=""></p>
                                 <div
-                                    key={index}
-                                    onClick={() => handleSearchItemClick(resultObj)}
-                                    className="flex cursor-pointer items-center justify-between border-b bg-white px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50/50"
-                                >
-                                    <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className=""></p>
-                                    <div
-                                        dangerouslySetInnerHTML={{ __html: additionalInfo }}
-                                        className="rounded-lg bg-slate-50 px-2 py-1 text-xs text-gray-600 shadow-sm"
-                                    ></div>
-                                </div>
-                            );
-                        }
-                        return null;
-                    })}
-                </div>
-
-                {/* 결과 개수 표시 */}
-                <div className="border-t border-gray-200 bg-white py-2 text-center text-xs text-gray-500">
-                    총 {searchResult.length}개 검색 결과
-                </div>
+                                    dangerouslySetInnerHTML={{ __html: additionalInfo }}
+                                    className="rounded-lg bg-slate-50 px-2 py-1 text-xs text-gray-600 shadow-sm"
+                                ></div>
+                            </Link>
+                        );
+                    } else {
+                        return (
+                            <div
+                                key={index}
+                                onClick={() => setSidebarData(resultObj)}
+                                className="flex cursor-pointer items-center justify-between border-b bg-white px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50/50"
+                            >
+                                <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className=""></p>
+                                <div
+                                    dangerouslySetInnerHTML={{ __html: additionalInfo }}
+                                    className="rounded-lg bg-slate-50 px-2 py-1 text-xs text-gray-600 shadow-sm"
+                                ></div>
+                            </div>
+                        );
+                    }
+                })}
             </div>
-        );
-    }
-    return null;
+
+            {/* 결과 개수 표시 */}
+            <div className="border-t border-gray-200 bg-white py-2 text-center text-xs text-gray-500">
+                총 {searchResult.length}개 검색 결과
+            </div>
+        </div>
+    );
 }
 
-export default Search 
+export default QueryWrapper 

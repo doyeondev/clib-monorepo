@@ -69,6 +69,7 @@ apps/*/.next
 apps/*/dist
 apps/*/build
 apps/*/.env
+apps/api/target/
 packages/*/node_modules
 packages/*/.turbo
 packages/*/dist

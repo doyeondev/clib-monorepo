@@ -1,5 +1,5 @@
 import React, { useEffect, useState, createContext, useContext, MouseEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 
 // 컴포넌트 임포트
 import Spinner from '../../components/clib/Spinner'
@@ -8,11 +8,11 @@ import DashboardFooter from '../../components/ui/Pagination'
 
 // 유틸리티
 import { getRegExp } from 'korean-regexp'
-import _ from 'lodash'
+import { chunkArray } from '../../utils/paginationUtil'
+import { orderBy, filterArray } from '../../utils/arrayUtils'
 
 // 스타일 및 UI 라이브러리
 import 'react-tippy/dist/tippy.css'
-import { Tooltip } from 'react-tippy'
 
 // API 함수 임포트
 import { getClibDataset, getClauseCategoryList } from '../../api/clib'
@@ -62,7 +62,6 @@ interface ClipContextType {
 }
 
 interface ArticleContextType {
-    articleData: any[]
     clauseList: ClauseItem[]
 }
 
@@ -87,7 +86,6 @@ const ClipContext = createContext<ClipContextType>({
 })
 
 const ArticleContext = createContext<ArticleContextType>({
-    articleData: [],
     clauseList: []
 })
 
@@ -99,15 +97,35 @@ const SessionContext = createContext<SessionContextType>({
     setToastState: () => { }
 })
 
+// QueryClient 생성
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 5 * 60 * 1000, // 5분 동안 데이터를 'fresh'하게 유지
+            gcTime: 10 * 60 * 1000, // 10분 동안 미사용 데이터 캐시 유지 (이전의 cacheTime)
+            retry: 1, // 실패 시 1번 재시도
+            refetchOnWindowFocus: false, // 창 포커스 시 자동 리페치 비활성화
+        },
+    },
+});
+
+// 루트 컴포넌트
+const ClauseWrapper = () => {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <Clause />
+        </QueryClientProvider>
+    );
+};
+
 const Clause = () => {
     const [contractList, setContractList] = useState<ClauseItem[]>([])
     const [clauseList, setClauseList] = useState<ClauseItem[]>([])
     const [categoryList, setCategoryList] = useState<CategoryItem[]>([])
     const [categoryHolder, setCategoryHolder] = useState<CategoryItem[]>([])
-    const [clickedCategory, setClickedCategory] = useState<string[]>([])
+    const [clickedCategory, setClickedCategory] = useState<string[]>(['allClauses'])
     const [currentCategory, setCurrentCategory] = useState<any>([])
 
-    const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<Error | null>(null)
 
     // 클립 관련 상태
@@ -115,10 +133,72 @@ const Clause = () => {
     const [toastDetail, setToastDetail] = useState<ToastDetail>({ id: '', action: '' })
     const [toastState, setToastState] = useState<boolean>(false)
 
+    // TanStack Query를 사용한 데이터 페칭
+    const { data: clausesData, isLoading: clausesLoading } = useQuery({
+        queryKey: ['clauses'],
+        queryFn: async () => {
+            console.log("[Clause] TanStack Query로 조항 데이터 로드 중...");
+            const data = await getClibDataset();
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                console.warn("[Clause] 조항 데이터가 비어있습니다");
+            }
+            return data || [];
+        }
+    });
+
+    const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
+        queryKey: ['categories'],
+        queryFn: async () => {
+            console.log("[Clause] TanStack Query로 카테고리 데이터 로드 중...");
+            const data = await getClauseCategoryList();
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                console.warn("[Clause] 카테고리 데이터가 비어있습니다");
+            }
+            return data || [];
+        }
+    });
+
+    // 로딩 상태 계산
+    const loading = clausesLoading || categoriesLoading;
+
     // 페이지 제목 설정
     useEffect(() => {
         document.title = '클립 | 공유자산'
     }, [])
+
+    // 데이터 처리 - TanStack Query 결과가 변경될 때만 실행
+    useEffect(() => {
+        if (clausesData && Array.isArray(clausesData)) {
+            console.log("[Clause] TanStack Query에서 조항 데이터 처리 중...");
+            const sortedClauseList = orderBy(
+                clausesData.filter((x: any) => x.disabled !== true),
+                ['clause_category', 'idx'],
+                ['asc', 'asc']
+            ) as ClauseItem[];
+
+            setContractList(sortedClauseList);
+            setClauseList(sortedClauseList);
+        }
+    }, [clausesData]);
+
+    useEffect(() => {
+        if (categoriesData && Array.isArray(categoriesData)) {
+            console.log("[Clause] TanStack Query에서 카테고리 데이터 처리 중...");
+            setCategoryHolder(categoriesData);
+            setCurrentCategory(categoriesData[0]);
+        } else if (!categoriesLoading && (!categoriesData || !Array.isArray(categoriesData) || categoriesData.length === 0)) {
+            // 기본 카테고리 설정
+            const defaultCategory = [{
+                id: 'default',
+                title: '기본 카테고리',
+                title_en: 'Default',
+                color: 'blue',
+                idx: 1
+            }];
+            setCategoryHolder(defaultCategory);
+            setCurrentCategory(defaultCategory[0]);
+        }
+    }, [categoriesData, categoriesLoading]);
 
     // 세션 컨텍스트 값 설정
     const sessionContextValue: SessionContextType = {
@@ -151,67 +231,6 @@ const Clause = () => {
     }
 
     useEffect(() => {
-        async function getPageData() {
-            try {
-                setLoading(true);
-
-                // 실제 API 호출로 변경
-                console.log("[Clause] API 호출 시작...");
-                const clip_clause = await getClibDataset();
-                const clause_category = await getClauseCategoryList();
-
-                console.log('clip_clause', clip_clause);
-                console.log('clause_category', clause_category);
-
-                // 데이터 확인 및 오류 처리
-                if (!clip_clause || clip_clause.length === 0) {
-                    console.warn("[Clause] 조항 데이터가 비어있습니다");
-                }
-
-                if (!clause_category || clause_category.length === 0) {
-                    console.warn("[Clause] 카테고리 데이터가 비어있습니다");
-                }
-
-                // 데이터 처리
-                const sortedClauseList = _.orderBy(
-                    Array.isArray(clip_clause)
-                        ? clip_clause.filter((x: any) => x.disabled !== true)
-                        : [],
-                    ['clause_category', 'idx'],
-                    ['asc', 'asc']
-                ) as ClauseItem[];
-
-                setContractList(sortedClauseList);
-                setClauseList(sortedClauseList);
-
-                // 카테고리 데이터 설정
-                if (Array.isArray(clause_category) && clause_category.length > 0) {
-                    setCategoryHolder(clause_category);
-                    setCurrentCategory(clause_category[0]);
-                } else {
-                    // 기본 카테고리 설정
-                    const defaultCategory = [{
-                        id: 'default',
-                        title: '기본 카테고리',
-                        title_en: 'Default',
-                        color: 'blue',
-                        idx: 1
-                    }];
-                    setCategoryHolder(defaultCategory);
-                    setCurrentCategory(defaultCategory[0]);
-                }
-
-                setLoading(false);
-            } catch (err: any) {
-                console.error('데이터 로딩 오류:', err);
-                setError(err);
-                setLoading(false);
-            }
-        }
-        getPageData();
-    }, []);
-
-    useEffect(() => {
         if (clauseList.length > 0 && categoryHolder.length > 0) {
             let updatedCategoryList = [...categoryHolder]
 
@@ -221,6 +240,11 @@ const Clause = () => {
                 updatedCategoryList[i].assets = categoryItems
                 updatedCategoryList[i].color = updatedCategoryList[i].color || 'blue'
             }
+
+            // 항목이 0개인 카테고리 필터링
+            updatedCategoryList = updatedCategoryList.filter(category =>
+                (category.assets && category.assets.length > 0) || category.id === 'allClauses'
+            )
 
             // '전체' 카테고리 추가
             const allCategory: CategoryItem = {
@@ -260,8 +284,9 @@ const Clause = () => {
                 setCurrentCategory(categoryList.filter(x => x.id === 'allClauses'))
             } else {
                 // 선택된 카테고리에 해당하는 항목만 표시
-                const newClauseList = clauseList.filter(x => clickedCategory.includes(x.clause_category))
-                const newCategory = categoryList.filter(x => clickedCategory.includes(x.id))
+                const categoryId = clickedCategory[0]; // 단일 선택이므로 첫 번째 항목만 사용
+                const newClauseList = clauseList.filter(x => x.clause_category === categoryId)
+                const newCategory = categoryList.filter(x => x.id === categoryId)
 
                 setContractList(newClauseList)
                 setCurrentCategory(newCategory)
@@ -273,43 +298,29 @@ const Clause = () => {
         const clickedId = (e.target as HTMLElement).id
         const type = (e.target as HTMLElement).getAttribute('name')
 
+        // 클립된 항목 카테고리 선택
         if (clickedId === 'clippedList') {
-            if (currentCategory === 'clippedList') {
-                setClickedCategory(prev => prev.filter(x => x === 'allClauses'))
+            if (clickedCategory.includes('clippedList')) {
+                // 이미 클립 카테고리가 선택된 상태에서 다시 클릭하면 '전체' 카테고리로 변경
+                setClickedCategory(['allClauses'])
             } else {
                 setClickedCategory(['clippedList'])
             }
+            return;
+        }
+
+        // 다른 카테고리 선택
+        if (type === 'search') {
+            // 검색 결과로 카테고리 선택 시
+            setClickedCategory([clickedId])
         } else {
-            if (type === 'search') {
-                if (!clickedCategory.includes('clippedList')) {
-                    setClickedCategory([clickedId])
-                }
+            // 일반 카테고리 선택 시
+            if (clickedCategory.includes(clickedId)) {
+                // 현재 선택된 카테고리를 다시 클릭하면 '전체' 카테고리로 변경
+                setClickedCategory(['allClauses'])
             } else {
-                // 1. 선택되지 않은 카테고리 클릭 시
-                if (!clickedCategory.includes(clickedId)) {
-                    // "전체선택이 눌려있는 상태"에서 다른 카테고리 선택
-                    if (clickedCategory.includes('allClauses')) {
-                        setClickedCategory(prev => [...prev.filter(x => x !== 'allClauses'), clickedId])
-                    }
-                    // "클립리스트가 눌려있는 상태"에서 다른 카테고리 선택
-                    else if (clickedCategory.includes('clippedList')) {
-                        setClickedCategory(prev => [...prev.filter(x => x !== 'clippedList'), clickedId])
-                    }
-                    // 일반 선택
-                    else {
-                        if (clickedId === 'allClauses') {
-                            // "전체선택"이 눌린 경우 다른 선택 해제
-                            setClickedCategory(['allClauses'])
-                        } else {
-                            // 다중 선택 추가
-                            setClickedCategory(prev => [...prev, clickedId])
-                        }
-                    }
-                }
-                // 2. 이미 선택된 카테고리 클릭 시 (선택 해제)
-                else {
-                    setClickedCategory(prev => prev.filter(x => x !== clickedId))
-                }
+                // 다른 카테고리 선택 시 이전 선택 초기화하고 새 카테고리만 선택
+                setClickedCategory([clickedId])
             }
         }
     }
@@ -321,7 +332,7 @@ const Clause = () => {
         <Layout>
             <CategoryContext.Provider value={{ categoryList, currentCategory, updateCategory, clickedCategory }}>
                 <ClipContext.Provider value={{ clippedItem: clippedClause }}>
-                    <ArticleContext.Provider value={{ articleData: [], clauseList }}>
+                    <ArticleContext.Provider value={{ clauseList }}>
                         <SessionContext.Provider value={sessionContextValue}>
                             <MainLayout contractList={contractList} />
                         </SessionContext.Provider>
@@ -337,9 +348,7 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ contractList }) => {
-    const [searchType, setSearchType] = useState<string>('contract')
     const [data, setData] = useState<any>([])
-    const [articleGroup, setArticleGroup] = useState<any[]>([])
 
     // 페이지네이션 상태
     const [contractGroup, setContractGroup] = useState<ClauseItem[][]>([])
@@ -347,69 +356,36 @@ const MainLayout: React.FC<MainLayoutProps> = ({ contractList }) => {
     const [maxIndex, setMaxIndex] = useState<number>(0)
 
     useEffect(() => {
-        if (searchType === 'contract') {
-            setMaxIndex(contractGroup.length - 1)
-        } else if (searchType === 'article') {
-            setMaxIndex(articleGroup.length - 1)
-        }
-    }, [searchType, contractGroup.length, articleGroup.length])
-
-    useEffect(() => {
         setCurrentIndex(0)
-        setContractGroup(_.chunk(contractList, 5))
-        setMaxIndex(_.chunk(contractList, 5).length - 1)
+        setContractGroup(chunkArray(contractList, 5))
+        setMaxIndex(chunkArray(contractList, 5).length - 1)
     }, [contractList])
 
-    if (searchType === 'contract') {
-        return (
-            <>
-                {contractGroup.map((elem, index) => {
-                    if (currentIndex === index) {
-                        return (
-                            <div key={index} className="flex min-h-[calc(100vh-120px)] flex-col bg-white">
-                                <SearchWrapper
-                                    contractList={contractList}
-                                    searchType={searchType}
-                                    setSearchType={setSearchType}
-                                    setData={setData}
-                                />
-                                <ContractList
-                                    contractList={elem}
-                                    setCurrentIndex={setCurrentIndex}
-                                    currentIndex={currentIndex}
-                                    maxIndex={maxIndex}
-                                    data={data}
-                                    setData={setData}
-                                />
-                            </div>
-                        )
-                    }
-                    return null
-                })}
-            </>
-        )
-    } else if (searchType === 'article') {
-        return (
-            <div className="bg-white">
-                <SearchWrapper
-                    contractList={contractList}
-                    searchType={searchType}
-                    setSearchType={setSearchType}
-                    setData={setData}
-                />
-                <ArticleList
-                    contractList={contractList}
-                    articleGroup={articleGroup}
-                    setCurrentIndex={setCurrentIndex}
-                    currentIndex={currentIndex}
-                    maxIndex={maxIndex}
-                    setData={setData}
-                />
-            </div>
-        )
-    }
-
-    return null
+    return (
+        <>
+            {contractGroup.map((elem, index) => {
+                if (currentIndex === index) {
+                    return (
+                        <div key={index} className="flex min-h-[calc(100vh-120px)] flex-col bg-white">
+                            <SearchWrapper
+                                contractList={contractList}
+                                setData={setData}
+                            />
+                            <ContractList
+                                contractList={elem}
+                                setCurrentIndex={setCurrentIndex}
+                                currentIndex={currentIndex}
+                                maxIndex={maxIndex}
+                                data={data}
+                                setData={setData}
+                            />
+                        </div>
+                    )
+                }
+                return null
+            })}
+        </>
+    )
 }
 
 interface ContractListProps {
@@ -430,7 +406,6 @@ const ContractList: React.FC<ContractListProps> = ({
     setData
 }) => {
     const { clippedClause, onClipClick, toastDetail, toastState } = useContext(SessionContext)
-    const [clickedItem, setClickedItem] = useState<any[]>([])
     const { categoryList, currentCategory, updateCategory, clickedCategory } = useContext(CategoryContext)
     const { clauseList } = useContext(ArticleContext)
 
@@ -467,8 +442,9 @@ const ContractList: React.FC<ContractListProps> = ({
                             >
                                 <input
                                     readOnly
-                                    type="checkbox"
-                                    className="pointer-events-none mr-4 h-4 w-4 rounded border-gray-300 bg-gray-100 text-fuchsia-500"
+                                    type="radio"
+                                    name="category"
+                                    className="pointer-events-none mr-4 h-4 w-4 rounded-full border-gray-300 bg-gray-100 text-fuchsia-500"
                                     checked={clickedCategory.includes(elem.id)}
                                 />
                                 <p className={`pointer-events-none text-[13px] ${clickedCategory.includes(elem.id) ? 'font-bold text-gray-700' : 'text-gray-500'}`}>
@@ -479,15 +455,16 @@ const ContractList: React.FC<ContractListProps> = ({
                         <div
                             onClick={(e) => updateCategory(e)}
                             id="clippedList"
-                            className={`mr-1.5 flex w-full cursor-pointer items-center rounded px-3 py-1 hover:bg-fuchsia-100/50 ${currentCategory === 'clippedList' ? 'bg-gray-100' : ''}`}
+                            className={`mr-1.5 flex w-full cursor-pointer items-center rounded px-3 py-1 hover:bg-fuchsia-100/50 ${clickedCategory.includes('clippedList') ? 'bg-gray-100' : ''}`}
                         >
                             <input
                                 readOnly
-                                type="checkbox"
-                                className="pointer-events-none mr-4 h-4 w-4 rounded border-gray-300 bg-gray-100 text-fuchsia-500"
-                                checked={currentCategory === 'clippedList'}
+                                type="radio"
+                                name="category"
+                                className="pointer-events-none mr-4 h-4 w-4 rounded-full border-gray-300 bg-gray-100 text-fuchsia-500"
+                                checked={clickedCategory.includes('clippedList')}
                             />
-                            <p className={`pointer-events-none text-[13px] ${currentCategory === 'clippedList' ? 'font-bold text-gray-700' : 'text-gray-500'}`}>
+                            <p className={`pointer-events-none text-[13px] ${clickedCategory.includes('clippedList') ? 'font-bold text-gray-700' : 'text-gray-500'}`}>
                                 클립한 조항 ({clippedClause.length})
                             </p>
                         </div>
@@ -496,7 +473,7 @@ const ContractList: React.FC<ContractListProps> = ({
 
                 {/* 조항 리스트 */}
                 <div className="flex flex-1 flex-col">
-                    {_.orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc']).map((item, index) => {
+                    {orderBy(contractList, ['clause_category', 'idx'], ['asc', 'asc']).map((item, index) => {
                         const category = categoryList.find(x => x.id === item.clause_category)
                         const categoryColor = category?.color || 'blue'
 
@@ -616,146 +593,24 @@ const ContractList: React.FC<ContractListProps> = ({
     )
 }
 
-interface ArticleListProps {
-    contractList: ClauseItem[]
-    articleGroup: any[]
-    currentIndex: number
-    setCurrentIndex: React.Dispatch<React.SetStateAction<number>>
-    maxIndex: number
-    setData: React.Dispatch<React.SetStateAction<any>>
-}
-
-const ArticleList: React.FC<ArticleListProps> = ({
-    contractList,
-    articleGroup,
-    currentIndex,
-    setCurrentIndex,
-    maxIndex,
-    setData
-}) => {
-    const [clickedItem, setClickedItem] = useState<any[]>([])
-
-    const paginationOnClick = (e: React.MouseEvent<HTMLElement>) => {
-        const btnId = (e.target as HTMLElement).id
-        const type = (e.target as HTMLElement).getAttribute('name')
-
-        if (btnId && type === 'paginationBtn') {
-            if (btnId === 'btnNext' && currentIndex < maxIndex) {
-                setCurrentIndex(currentIndex + 1)
-            } else if (btnId === 'btnPrevious' && currentIndex > 0) {
-                setCurrentIndex(currentIndex - 1)
-            }
-        }
-
-        if (btnId && type === 'paginationNum') {
-            setCurrentIndex(parseInt(btnId))
-        }
-    }
-
-    const setDetailData = (item: any, parent: any) => {
-        setClickedItem(item)
-        setData(parent[0])
-    }
-
-    // 컨텐츠가 없을 때 표시할 메시지
-    if (!articleGroup || articleGroup.length === 0 || !articleGroup[currentIndex]) {
-        return (
-            <div className="flex h-64 w-full flex-col items-center justify-center">
-                <p className="text-gray-500">선택된 카테고리에 조항이 없습니다.</p>
-                <p className="mt-2 text-sm text-gray-400">다른 카테고리를 선택하거나 검색해보세요.</p>
-            </div>
-        )
-    }
-
-    return (
-        <main className="mx-auto flex w-[920px] flex-col justify-between px-[10vw] py-6">
-            {articleGroup[currentIndex].map((item: any, index: number) => (
-                <div key={item.id || index} className="mt-4 flex w-full border-b pb-4">
-                    <div className="h-auto w-5 flex-none grow border-l-4 border-gray-500"></div>
-                    <div className="flex w-full grow flex-col text-sm">
-                        <div className="flex flex-col">
-                            <div onClick={() => setDetailData(item.article, item)} className="group flex cursor-pointer items-center justify-between pb-4">
-                                <div className="mr-1 grow text-base font-bold tracking-wide text-black group-hover:text-gray-700 group-hover:underline">
-                                    {item.article?.text || item.clause_title || item.title}
-                                </div>
-                                <div className="rounded bg-slate-100 px-1 py-0.5 text-xs text-gray-500 group-hover:visible">
-                                    {item.title || item.contract_title || item.source} ({item.source})
-                                </div>
-                            </div>
-                            <div className="flex flex-col text-[13px] leading-relaxed">
-                                <p className="w-fit font-medium text-gray-500">본문 내용</p>
-                                {item.paragraph ? (
-                                    item.paragraph.map((elem: any, idx: number) => {
-                                        if (elem.tag === 'p') {
-                                            return (
-                                                <p key={idx} className="line-clamp-3 text-gray-900">
-                                                    {elem.text}
-                                                </p>
-                                            )
-                                        } else if (elem.tag === 'ol') {
-                                            return (
-                                                <div
-                                                    key={idx}
-                                                    dangerouslySetInnerHTML={{ __html: elem.html }}
-                                                    className="preview-doc line-clamp-3 text-gray-900"
-                                                ></div>
-                                            )
-                                        }
-                                        return null
-                                    })
-                                ) : (
-                                    <p className="line-clamp-3 text-gray-900">{item.content || "내용 없음"}</p>
-                                )}
-                            </div>
-                        </div>
-                        <div className="my-4 w-full border-b-2 border-dotted"></div>
-                        <div className="flex justify-between text-[13px]">
-                            <div className="flex flex-col">
-                                <p className="text-gray-500">계약 당사자(갑)</p>
-                                <p className="text-gray-800">{item.partyA || "정보 없음"}</p>
-                            </div>
-                            <div className="flex flex-col">
-                                <p className="text-gray-500">계약 당사자(을)</p>
-                                <p className="text-gray-800">{item.partyB || "정보 없음"}</p>
-                            </div>
-                            <div className="flex flex-col">
-                                <p className="text-gray-500">산업</p>
-                                <p className="text-gray-800">{item.industry || "정보 없음"}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ))}
-            <DashboardFooter onClickHandler={paginationOnClick} currentIndex={currentIndex} maxIndex={maxIndex} />
-        </main>
-    )
-}
-
 interface SearchWrapperProps {
     contractList: ClauseItem[]
-    searchType: string
-    setSearchType: React.Dispatch<React.SetStateAction<string>>
     setData: React.Dispatch<React.SetStateAction<any>>
-    showSidebar?: boolean
 }
 
 const SearchWrapper: React.FC<SearchWrapperProps> = ({
     contractList,
-    searchType,
-    setSearchType,
     setData
 }) => {
     return (
         <section className="mt-6 flex flex-col px-[10vw] py-4">
             <aside className="mx-auto flex w-fit items-center gap-x-2 text-2xl">
                 <h2 className="text-xl font-semibold">
-                    {searchType === 'contract' ? '클립이 제공하는 조항 라이브러리입니다' : '계약서 조항을 검색하세요!'}
+                    클립이 제공하는 조항 라이브러리입니다
                 </h2>
             </aside>
             <SearchInput
                 contractList={contractList}
-                searchType={searchType}
-                setSearchType={setSearchType}
                 setData={setData}
             />
         </section>
@@ -764,18 +619,13 @@ const SearchWrapper: React.FC<SearchWrapperProps> = ({
 
 interface SearchInputProps {
     contractList: ClauseItem[]
-    searchType: string
-    setSearchType: React.Dispatch<React.SetStateAction<string>>
     setData: React.Dispatch<React.SetStateAction<any>>
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({
-    searchType,
-    setSearchType,
     setData,
     contractList
 }) => {
-    const navigate = useNavigate()
     const [searchTerm, setSearchTerm] = useState<string>('')
     const [searchLoading, setSearchLoading] = useState<boolean>(false)
     const [searchResults, setSearchResults] = useState<any[]>([])
@@ -803,7 +653,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
                 } else if (item.content) {
                     contentMatch = item.content.match(getRegExp(searchTerm)) !== null
                 }
-                // 필요한 경우 content_array 검색 로직을 여기에 추가
 
                 return titleMatch || contentMatch
             })
@@ -832,12 +681,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
         if (event.key === 'Enter') {
             runSearch()
         }
-    }
-
-    const resetSearch = (newType: string) => {
-        setSearchTerm('')
-        setSearchResults([])
-        setSearchType(newType)
     }
 
     return (
@@ -891,7 +734,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
                     setSearchTerm={setSearchTerm}
                     searchResult={searchResults}
                     searchTerm={searchTerm}
-                    searchType={searchType}
                     setData={setData}
                 />
             )}
@@ -903,7 +745,6 @@ interface SearchResultProps {
     setSearchTerm: React.Dispatch<React.SetStateAction<string>>
     searchResult: any[]
     searchTerm: string
-    searchType: string
     setData: React.Dispatch<React.SetStateAction<any>>
 }
 
@@ -911,37 +752,9 @@ const SearchResult: React.FC<SearchResultProps> = ({
     setSearchTerm,
     searchResult,
     searchTerm,
-    searchType,
     setData
 }) => {
     const { categoryList, updateCategory } = useContext(CategoryContext)
-
-    const setSidebarData = (item: any) => {
-        const clauseTitle = item.clause_title || item.title_ko || item.title || ''
-        const title = item.contract_title || item.title || ''
-
-        // 사이드패널에 표시할 데이터 구성
-        const sidebarData = {
-            ...item,
-            title: title,
-            clauseArray: [{
-                idx: 0,
-                text: clauseTitle
-            }],
-            contentArray: [[
-                { tag: 'h2', idx: 0, text: clauseTitle, html: `<h2>${clauseTitle}</h2>` },
-                {
-                    tag: 'p',
-                    idx: 0,
-                    text: item.content_ko || item.content || '',
-                    html: `<p>${item.content_ko || item.content || ''}</p>`
-                }
-            ]]
-        }
-
-        setData(sidebarData)
-        setSearchTerm('')
-    }
 
     if (searchResult.length > 0) {
         return (
@@ -949,57 +762,33 @@ const SearchResult: React.FC<SearchResultProps> = ({
                 {searchResult.map((resultObj, index) => {
                     const category = categoryList.find((x) => x.id === resultObj.clause_category)
 
-                    let matchingTerm, additionalInfo
-                    // 1. 계약서 제목 검색
-                    if (category && searchType === 'contract') {
-                        const titleText = resultObj.title_ko || resultObj.clause_title || resultObj.title || ''
-                        matchingTerm = titleText.replace(
-                            searchTerm,
-                            `<span class="font-bold text-purple-800">${searchTerm}</span>`
-                        )
-                        additionalInfo = `<p>${resultObj.source || ''}</p>`
+                    if (!category) return null;
 
-                        return (
-                            <div
-                                key={index}
-                                id={category.id}
-                                onClick={(e) => {
-                                    updateCategory(e)
-                                    setSearchTerm('')
-                                }}
-                                className="flex cursor-pointer items-center justify-between px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                                <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className="pointer-events-none"></p>
-                                <div className="ml-4 flex items-center space-x-2 text-xs">
-                                    <div key={category.id} className="rounded px-1.5 py-0.5 text-gray-700">
-                                        {category?.title_en || ''}
-                                    </div>
+                    const titleText = resultObj.title_ko || resultObj.clause_title || resultObj.title || '';
+                    const matchingTerm = titleText.replace(
+                        searchTerm,
+                        `<span class="font-bold text-purple-800">${searchTerm}</span>`
+                    );
+                    const additionalInfo = `<p>${resultObj.source || ''}</p>`;
+
+                    return (
+                        <div
+                            key={index}
+                            id={category.id}
+                            onClick={(e) => {
+                                updateCategory(e)
+                                setSearchTerm('')
+                            }}
+                            className="flex cursor-pointer items-center justify-between px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                            <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className="pointer-events-none"></p>
+                            <div className="ml-4 flex items-center space-x-2 text-xs">
+                                <div key={category.id} className="rounded px-1.5 py-0.5 text-gray-700">
+                                    {category?.title_en || ''}
                                 </div>
                             </div>
-                        )
-                    } else if (searchType === 'article') {
-                        const titleText = resultObj.article?.text || resultObj.clause_title || resultObj.title || ''
-                        matchingTerm = titleText.replace(
-                            searchTerm,
-                            `<span class="font-bold text-purple-800">${searchTerm}</span>`
-                        )
-                        additionalInfo = `<p>${resultObj.title || resultObj.contract_title || ''} (${resultObj.source || ''})</p>`
-
-                        return (
-                            <div
-                                key={index}
-                                onClick={() => setSidebarData(resultObj)}
-                                className="flex cursor-pointer items-center justify-between border-b bg-white px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50/50"
-                            >
-                                <p dangerouslySetInnerHTML={{ __html: matchingTerm }}></p>
-                                <div
-                                    dangerouslySetInnerHTML={{ __html: additionalInfo }}
-                                    className="rounded-lg bg-slate-50 px-2 py-1 text-xs text-gray-600 shadow-sm"
-                                ></div>
-                            </div>
-                        )
-                    }
-                    return null
+                        </div>
+                    )
                 })}
             </div>
         )
@@ -1007,4 +796,4 @@ const SearchResult: React.FC<SearchResultProps> = ({
     return null
 }
 
-export default Clause
+export default ClauseWrapper
