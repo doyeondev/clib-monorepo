@@ -97,7 +97,7 @@ const Upload: React.FC = () => {
     const [success, setSuccess] = useState(false);
     const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
-    const [useBackend, setUseBackend] = useState<boolean>(true); // 백엔드 API 사용 여부
+    // const [useBackend, setUseBackend] = useState<boolean>(true); // 백엔드 API 사용 여부
 
     // 하이라이트 처리 관련 상태 추가
     const [highlightedText, setHighlightedText] = useState<HighlightedText[]>([]);
@@ -143,9 +143,9 @@ const Upload: React.FC = () => {
                 creator: formData.creator,
                 clauseArray: finalData.filter(item => item.tag === 'h2'),
                 contentArray: contentArray,
-                groupedArray: groupedArray,
+                // groupedArray: groupedArray, // 안씀
                 appendix: appendix.length > 0 ? appendix : [],
-                html: html
+                // html: html // 안씀
             };
 
             console.log('업로드 데이터:', dataToSave);
@@ -219,71 +219,71 @@ const Upload: React.FC = () => {
         try {
             console.log('Processing document file:', file.name);
 
-            if (useBackend) {
-                // 백엔드 API를 통한 처리 시도
-                try {
-                    const result = await uploadDocxFile(
-                        file,
-                        formData.source,
-                        formData.industry,
-                        formData.language,
-                        formData.creator
-                    );
-                    console.log('백엔드 API 응답:', result);
+            // if (useBackend) {
+            //     // 백엔드 API를 통한 처리 시도
+            //     try {
+            //         const result = await uploadDocxFile(
+            //             file,
+            //             formData.source,
+            //             formData.industry,
+            //             formData.language,
+            //             formData.creator
+            //         );
+            //         console.log('백엔드 API 응답:', result);
 
-                    if (result && !result.error) {
-                        // HTML 표시
-                        const resultDiv = document.getElementById('result1');
-                        if (resultDiv && result.html) {
-                            resultDiv.innerHTML = result.html;
-                        }
+            //         if (result && !result.error) {
+            //             // HTML 표시
+            //             const resultDiv = document.getElementById('result1');
+            //             if (resultDiv && result.html) {
+            //                 resultDiv.innerHTML = result.html;
+            //             }
 
-                        // 데이터 설정
-                        setHtml(result.html || '');
+            //             // 데이터 설정
+            //             setHtml(result.html || '');
 
-                        // 메타데이터 설정
-                        if (result.metaData) {
-                            setMetaData({
-                                title: result.metaData.title || '',
-                                partyA: result.metaData.partyA || '',
-                                partyB: result.metaData.partyB || '',
-                                purpose: result.metaData.purpose || ''
-                            });
-                        }
+            //             // 메타데이터 설정
+            //             if (result.metaData) {
+            //                 setMetaData({
+            //                     title: result.metaData.title || '',
+            //                     partyA: result.metaData.partyA || '',
+            //                     partyB: result.metaData.partyB || '',
+            //                     purpose: result.metaData.purpose || ''
+            //                 });
+            //             }
 
-                        // 문서 구조 설정
-                        if (result.contentArray) {
-                            setContentArray(result.contentArray);
-                            setFinalData(result.contentArray);
-                        }
+            //             // 문서 구조 설정
+            //             if (result.contentArray) {
+            //                 setContentArray(result.contentArray);
+            //                 setFinalData(result.contentArray);
+            //             }
 
-                        if (result.groupedArray) {
-                            setGroupedArray(result.groupedArray);
-                        }
+            //             if (result.groupedArray) {
+            //                 setGroupedArray(result.groupedArray);
+            //             }
 
-                        if (result.appendix) {
-                            setAppendix(result.appendix);
-                        }
+            //             if (result.appendix) {
+            //                 setAppendix(result.appendix);
+            //             }
 
-                        if (result.highlightedText) {
-                            setHighlightedText(result.highlightedText);
-                        }
+            //             if (result.highlightedText) {
+            //                 setHighlightedText(result.highlightedText);
+            //             }
 
-                        // 미리보기 데이터 생성
-                        generatePreviewData(result.groupedArray || []);
+            //             // 미리보기 데이터 생성
+            //             generatePreviewData(result.groupedArray || []);
 
-                        console.log('백엔드 문서 처리 완료');
-                        setIsLoading(false);
-                        return;
-                    } else {
-                        console.warn('백엔드 API 오류, 로컬 처리로 전환:', result?.error);
-                        // 오류 시 로컬 처리로 폴백
-                    }
-                } catch (apiError) {
-                    console.warn('백엔드 API 호출 실패, 로컬 처리로 전환:', apiError);
-                    // 오류 시 로컬 처리로 폴백
-                }
-            }
+            //             console.log('백엔드 문서 처리 완료');
+            //             setIsLoading(false);
+            //             return;
+            //         } else {
+            //             console.warn('백엔드 API 오류, 로컬 처리로 전환:', result?.error);
+            //             // 오류 시 로컬 처리로 폴백
+            //         }
+            //     } catch (apiError) {
+            //         console.warn('백엔드 API 호출 실패, 로컬 처리로 전환:', apiError);
+            //         // 오류 시 로컬 처리로 폴백
+            //     }
+            // }
 
             // 백엔드 API 실패 또는 로컬 처리 선택 시 로컬에서 처리
             console.log('로컬에서 문서 처리 시작');
@@ -522,7 +522,7 @@ const Upload: React.FC = () => {
                 contractList.push(contractItem);
                 contractItem = [];
                 contractItem.push(contractData[i]);
-                currentIdx = Number(contractData[i].idx);
+                currentIdx = Number(contractData[i].idx) + 1;
             }
 
             if (i === contractData.length - 1) {
@@ -532,6 +532,8 @@ const Upload: React.FC = () => {
 
         console.log('contractList(그룹화된 배열) 생성 완료:', contractList);
         setGroupedArray(contractList);
+
+        console.log("contractList", contractList)
 
         // 미리보기 데이터 생성
         generatePreviewData(contractList);
@@ -642,9 +644,9 @@ const Upload: React.FC = () => {
     };
 
     // 처리 방식 변경 핸들러
-    const handleProcessingMode = (mode: 'backend' | 'local') => {
-        setUseBackend(mode === 'backend');
-    };
+    // const handleProcessingMode = (mode: 'backend' | 'local') => {
+    //     setUseBackend(mode === 'backend');
+    // };
 
     // 미리보기 페이지 이동 처리
     const handlePageChange = (direction: 'prev' | 'next') => {
@@ -776,7 +778,7 @@ const Upload: React.FC = () => {
 
                 <div className="w-full max-w-7xl mx-auto">
                     {/* 처리 방식 선택 */}
-                    <div className="mb-4 flex justify-center space-x-4">
+                    {/* <div className="mb-4 flex justify-center space-x-4">
                         <button
                             onClick={() => handleProcessingMode('backend')}
                             className={`px-4 py-2 rounded ${useBackend ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
@@ -789,7 +791,7 @@ const Upload: React.FC = () => {
                         >
                             로컬 처리 사용
                         </button>
-                    </div>
+                    </div> */}
 
                     {/* 좌우 분할 레이아웃으로 변경 */}
                     <div className="flex flex-row gap-6">

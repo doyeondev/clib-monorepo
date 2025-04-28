@@ -50,11 +50,26 @@ export const insert_contractData = async (data: any): Promise<any> => {
 	try {
 		// 로컬 백엔드 API 먼저 시도
 		try {
-			const response = await localApiClient.post('/upload/insert-contract', {
+			const apiUrlEndpoint = `${API_BASE_URL}/saveClibData`;
+			const body = JSON.stringify({
 				data: data,
 			});
-			console.log('계약서 데이터 저장 로컬 API 응답:', response.data);
-			return response.data;
+
+			const response = await fetch(apiUrlEndpoint, {
+				method: 'post',
+				body,
+			});
+
+			console.log('외부 API 응답:', response);
+			if (response.ok) {
+				return response.json();
+			}
+			throw new Error('외부 API 호출 실패: ' + response.status);
+			// const response = await localApiClient.post('/upload/insert-contract', {
+			// 	data: data,
+			// });
+			// console.log('계약서 데이터 저장 로컬 API 응답:', response.data);
+			// return response.data;
 		} catch (localError) {
 			console.warn('로컬 API 호출 실패, 외부 API로 전환:', localError);
 
