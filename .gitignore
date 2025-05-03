@@ -79,3 +79,4 @@ packages/*/.env
 target/
 
 _docs
+*storybook.log
