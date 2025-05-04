@@ -4,11 +4,17 @@
  */
 
 // 기본 API URL 설정
-// 개발 환경에서는 상대 경로를, 프로덕션 환경에서는 절대 URL을 사용
+// 환경 변수에서 API URL을 읽어오거나 기본값 사용
 const isProduction = import.meta.env.PROD;
-const API_BASE_URL = isProduction
-	? 'https://api.clib.kr/api' // 프로덕션 환경: 절대 URL 사용
-	: '/api'; // 개발 환경: 상대 경로 사용 (vite.config.ts의 프록시 사용)
+const API_BASE_URL = import.meta.env.VITE_API_URL
+	? import.meta.env.VITE_API_URL.endsWith('/api')
+		? import.meta.env.VITE_API_URL
+		: `${import.meta.env.VITE_API_URL}/api`
+	: isProduction
+		? 'https://api.clib.kr/api' // 환경 변수 없을 때 프로덕션 기본값
+		: '/api'; // 개발 환경 기본값
+
+console.log('[API] 사용 중인 API URL:', API_BASE_URL);
 
 /**
  * 조항 카테고리 목록을 가져옵니다.
