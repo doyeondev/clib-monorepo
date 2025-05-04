@@ -3,8 +3,12 @@
  * AWS RDS의 PostgreSQL 데이터베이스와 통신하는 API 함수들
  */
 
-// 기본 API URL
-const API_BASE_URL = '/api';
+// 기본 API URL 설정
+// 개발 환경에서는 상대 경로를, 프로덕션 환경에서는 절대 URL을 사용
+const isProduction = import.meta.env.PROD;
+const API_BASE_URL = isProduction
+	? 'https://api.clib.kr/api' // 프로덕션 환경: 절대 URL 사용
+	: '/api'; // 개발 환경: 상대 경로 사용 (vite.config.ts의 프록시 사용)
 
 /**
  * 조항 카테고리 목록을 가져옵니다.
