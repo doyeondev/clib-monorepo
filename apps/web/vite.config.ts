@@ -29,7 +29,8 @@ export default defineConfigVitest({
 		port: 5173,
 		proxy: {
 			'/api': {
-				target: 'http://localhost:8081',
+				// 개발 환경에서는 localhost:8081을 사용, 그 외에는 프로덕션 URL 사용
+				target: process.env.NODE_ENV === 'development' ? 'http://localhost:8081' : process.env.VITE_API_URL || 'https://api.clib.kr',
 				changeOrigin: true,
 				secure: false,
 				// rewrite: path => path.replace(/^\/api/, '/api'),

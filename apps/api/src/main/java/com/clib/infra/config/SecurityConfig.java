@@ -33,11 +33,18 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*")); // 모든 Origin 허용
+        // 특정 도메인 허용 (Vercel 배포 도메인 추가)
+        configuration.setAllowedOrigins(Arrays.asList(
+            "https://clib.kr", 
+            "https://www.clib.kr",
+            "http://localhost:5173",  // 로컬 개발 환경
+            "http://54.253.167.137",  // EC2 퍼블릭 IPv4 주소
+            "https://54.253.167.137"  // EC2 퍼블릭 IPv4 주소 (HTTPS)
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")); // 모든 HTTP 메서드 허용
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
-        configuration.setAllowCredentials(false); // 필요시 true로 설정
+        configuration.setAllowCredentials(true); // 쿠키 및 인증 정보 허용
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
