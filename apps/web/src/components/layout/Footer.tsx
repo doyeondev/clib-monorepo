@@ -11,11 +11,7 @@ const Footer: FC = () => {
       <footer className="body-font flex h-[60px] w-full px-[15vw] text-xs sm:px-[10vw]">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center space-x-1">
-            <p className="mt-4 text-gray-500 sm:mt-0">© 2023 clib</p>
-            <p className="mt-4 text-gray-500 sm:mt-0">·</p>
-            <p className="mt-4 text-gray-500 sm:mt-0">주식회사 마이리걸팀</p>
-            <p className="mt-4 text-gray-500 sm:mt-0">·</p>
-            <p className="mt-4 text-gray-500 sm:mt-0">대표 김도연(dykim@mylegalteam.io)</p>
+            <p className="mt-4 text-gray-500 sm:mt-0">© 2023-2025 clib</p>
           </div>
           <Link to="/" className="title-font flex space-x-1.5 font-medium text-gray-900">
             <img alt="클립" src={clibIcon} className="h-auto w-[30px] justify-center" />
