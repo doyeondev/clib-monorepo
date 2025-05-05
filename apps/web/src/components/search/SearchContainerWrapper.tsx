@@ -14,7 +14,7 @@ const SearchContainerWrapper: FC<SearchContainerWrapperProps> = ({ contractList,
     return (
         <section className="mt-6 flex flex-col px-[10vw] py-6">
             <aside className="mx-auto flex w-fit items-center gap-x-2 text-xl">
-                {searchType === 'contract' ? (
+                {/* {searchType === 'contract' ? (
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -41,8 +41,8 @@ const SearchContainerWrapper: FC<SearchContainerWrapperProps> = ({ contractList,
                             clipRule="evenodd"
                         />
                     </svg>
-                )}
-                <h2 className="font-semibold">{searchType === 'contract' ? '어떤 계약서 양식이 필요하신가요?' : '계약서 조항을 검색하세요!'}</h2>
+                )} */}
+                <h2 className="font-semibold">{searchType === 'contract' ? '어떤 계약서 양식이 필요하신가요?' : '필요한 조항을 검색해보세요!'}</h2>
             </aside>
             <SearchInput searchTerm={''} setSearchTerm={() => { }} searchType={searchType} setSearchType={setSearchType} />
         </section>
