@@ -210,7 +210,7 @@ export const ClauseSearchWrapper: React.FC<SearchWrapperProps> = ({
             <aside className="mx-auto flex w-fit items-center gap-x-2 text-2xl">
                 <h2 className="text-xl font-semibold">{title}</h2>
             </aside>
-            <ClauseSearchInput setData={setData} />
+            {/* <ClauseSearchInput setData={setData} /> */}
         </section>
     );
 };

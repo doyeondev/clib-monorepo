@@ -22,7 +22,7 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
     const [showResults, setShowResults] = useState<boolean>(false) // 검색 결과 표시 여부
     const { clauseList } = useContext(ArticleContext)
     const { contractAsset } = useContext(SessionContext)
-    const { setSidebarData } = useContext(AssetContext)
+    const { setSidebarData, setShowSidebar } = useContext(AssetContext)
 
     // 검색 인풋과 결과 컨테이너에 대한 ref
     const searchContainerRef = useRef<HTMLDivElement>(null)
@@ -159,6 +159,20 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
         }
     };
 
+    // 검색 결과 항목 클릭 핸들러
+    const handleResultClick = (resultObj: any) => {
+        // 검색 결과 숨기기
+        setShowResults(false);
+
+        if (searchType === 'contract') {
+            // 계약서 검색인 경우 해당 링크로 이동
+            navigate(`/search/${resultObj.id}`);
+        } else if (searchType === 'article') {
+            // 조항 검색인 경우 사이드바 데이터 설정
+            setSidebarData(resultObj);
+        }
+    };
+
     return (
         <>
             <div ref={searchContainerRef} className="mx-auto mt-6 flex w-[560px] flex-col relative">
@@ -167,7 +181,7 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
                     className="flex"
                 >
                     <div className="relative w-full">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        {/* <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <svg
                                 className="w-5 h-5 text-gray-500 dark:text-gray-400"
                                 aria-hidden="true"
@@ -183,12 +197,12 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
                                     d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
                                 />
                             </svg>
-                        </div>
+                        </div> */}
                         <input
                             ref={searchInputRef}
                             type="text"
                             id="search"
-                            className="block w-full h-12 p-2.5 pl-10 text-sm text-gray-900 border border-gray-300 rounded-xl bg-white focus:ring-blue-500 focus:border-blue-500"
+                            className="block w-full rounded-lg border border-fuchsia-100 bg-fuchsia-50/30 p-2.5 ps-5 text-sm text-gray-900 hover:border-fuchsia-200 hover:bg-white focus:border-fuchsia-300 focus:ring-blue-200"
                             placeholder={searchType === 'contract' ? '검색어를 입력하세요.' : '검색어를 입력하세요.'}
                             required
                             value={searchTerm}
@@ -223,7 +237,7 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
                         )}
                     </div>
 
-                    <div className="flex mt-5 gap-x-4 absolute -top-10 right-0">
+                    {/* <div className="flex mt-5 gap-x-4 absolute -top-10 right-0">
                         <div
                             className={`flex cursor-pointer items-center gap-x-2 text-xs ${searchType === 'article' ? 'text-[#5766CB] font-bold' : 'text-gray-500'}`}
                             onClick={() => resetSearch('article')}
@@ -262,11 +276,11 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
                             </svg>
                             <p className="pointer-events-none">계약서 검색</p>
                         </div>
-                    </div>
+                    </div> */}
                 </form>
 
                 {searchResult.length > 0 && showResults && (
-                    <div className="absolute z-50 w-full flex flex-col rounded bg-gray-100 shadow-sm top-[120px]">
+                    <div className="absolute z-50 w-full flex flex-col rounded bg-gray-100 shadow-sm top-[50px]">
                         {/* 스크롤 가능한 결과 컨테이너 */}
                         <div className="max-h-[400px] overflow-y-auto">
                             {searchResult.map((resultObj, index) => {
@@ -282,7 +296,10 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
                                     return (
                                         <a
                                             key={index}
-                                            href={`/search/${resultObj.id}`}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleResultClick(resultObj);
+                                            }}
                                             className="flex cursor-pointer items-center justify-between border-b bg-white px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50/50"
                                         >
                                             <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className=""></p>
@@ -301,7 +318,7 @@ const SearchInput: FC<SearchInputProps> = ({ searchTerm: initialSearchTerm, setS
                                     return (
                                         <div
                                             key={index}
-                                            onClick={() => setSidebarData(resultObj)}
+                                            onClick={() => handleResultClick(resultObj)}
                                             className="flex cursor-pointer items-center justify-between border-b bg-white px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50/50"
                                         >
                                             <p dangerouslySetInnerHTML={{ __html: matchingTerm }} className=""></p>

@@ -4,15 +4,8 @@
  */
 
 // 기본 API URL 설정
-// 환경 변수에서 API URL을 읽어오거나 기본값 사용
-const isProduction = import.meta.env.PROD;
-const API_BASE_URL = import.meta.env.VITE_API_URL
-	? import.meta.env.VITE_API_URL.endsWith('/api')
-		? import.meta.env.VITE_API_URL
-		: `${import.meta.env.VITE_API_URL}/api`
-	: isProduction
-		? 'https://api.clib.kr/api' // 환경 변수 없을 때 프로덕션 기본값
-		: '/api'; // 개발 환경 기본값
+// 환경 변수에서 API URL을 읽어오거나 기본값 사용 - 항상 api.clib.kr 사용
+const API_BASE_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL}/api`) : 'https://api.clib.kr/api'; // 개발 및 프로덕션 환경 모두 동일한 API 서버 사용
 
 console.log('[API] 사용 중인 API URL:', API_BASE_URL);
 

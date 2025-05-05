@@ -15,7 +15,7 @@ const Header: FC = () => {
         <div className="mx-auto flex h-[60px] w-full max-w-[1400px] items-center px-8 text-xs font-medium">
           <Link to="/" className="title-font flex space-x-1.5 font-medium text-gray-900">
             <img alt="클립" src={clibIcon} className="h-8 w-8 justify-center" />
-            <span className="text-2xl font-bold text-purple-600">Clib</span>
+            <img alt="클립" src={clibText} className="mt-[1px] h-auto w-[44px] justify-center" />
           </Link>
           <div className="ml-auto flex h-full items-center space-x-4 py-2">
             <Link className="flex cursor-pointer items-center" to="/clause">

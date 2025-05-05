@@ -2,11 +2,13 @@ import { defineConfig } from 'vite';
 import { defineConfig as defineConfigVitest } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import removeConsole from 'vite-plugin-remove-console';
+
 /// <reference types="vitest" />
 
 // https://vite.dev/config/
 export default defineConfigVitest({
-	plugins: [react()],
+	plugins: [react(), removeConsole()],
 	test: {
 		environment: 'jsdom',
 		globals: true,
@@ -29,10 +31,10 @@ export default defineConfigVitest({
 		port: 5173,
 		proxy: {
 			'/api': {
-				// 개발 환경에서는 localhost:8081을 사용, 그 외에는 프로덕션 URL 사용
-				target: process.env.NODE_ENV === 'development' ? 'http://localhost:8081' : process.env.VITE_API_URL || 'https://api.clib.kr',
+				// 개발/프로덕션 환경 모두 동일하게 api.clib.kr 사용
+				target: 'https://api.clib.kr',
 				changeOrigin: true,
-				secure: false,
+				secure: true,
 				// rewrite: path => path.replace(/^\/api/, '/api'),
 			},
 		},

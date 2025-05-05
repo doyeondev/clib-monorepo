@@ -59,9 +59,10 @@ const Upload: React.FC = () => {
 
     // 드롭다운 옵션
     const sourceOptions = [
-        { value: '리걸인사이트', label: '리걸인사이트' },
-        { value: '엘지', label: '엘지' },
-        { value: '법무법인 대륙아주', label: '법무법인 대륙아주' },
+        // { value: '리걸인사이트', label: '리걸인사이트' },
+        // { value: '엘지', label: '엘지' },
+        // { value: '기관 계약서', label: '기관 계약서' },
+        { value: '업무 계약서', label: '업무 계약서' },
         { value: '통상 계약서', label: '통상 계약서' },
         { value: '표준 계약서', label: '표준 계약서' },
         { value: '기타', label: '기타' }
